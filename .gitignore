@@ -1,0 +1,7 @@
+.vscode
+TMP
+OUT
+
+*.o
+*.sfc
+*.mlb

@@ -1,5 +1,8 @@
 .segment "VECTORS"
 
+    .import nmi
+    .import irq
+
     ; native mode whatnots
     .word $0000 ; unused
     .word $0000 ; unused

@@ -1,13 +1,61 @@
 .segment "INIT" ; you get 4kb in this section, make it count
 
     reset:
-        jml @goto_fastrom
+        jml @goto_fastrom ; this also sets the program bank
 
     @goto_fastrom:
-        ; switch to native mode
+    ; switch to native mode
         sei 
         clc 
-        xce 
+        xce
 
-        ; go to wherever main is
-        jml main
+    ; disable decimal mode
+        cld
+
+    ; set the stack pointer
+        setaxy16
+        ldx #$1fff
+        txs
+
+    ; enable fastrom
+        lda #1
+        sta ROMSPEED
+
+    ; set data bank
+        lda #$80
+        pha
+        plb
+
+    ; init everything
+        jsl SE_INIT
+
+    ; clear RAM
+        seta16
+        setxy8
+        ldx #DMA_LINEAR|DMA_CONST
+        stx DMAMODE
+        ldx #.lobyte(WMDATA)
+        stx DMAPPUREG
+        lda #.loword(SE_IDENTITY_TABLE+0)
+        sta DMAADDR
+        ldx #^SE_IDENTITY_TABLE+0
+        stx DMAADDRBANK
+        stz DMALEN ; 0 length = $10000
+
+        ldx #1  ; channel 0 (1 << n)
+        stx COPYSTART   ; start the transfer
+        stx COPYSTART   ; do it again!
+
+    ;
+    ;;  TODO: add more clear routines here
+    ;
+
+    jsl SE_PPU_ENABLE_NMI
+    ; go to wherever main is
+        setaxy8
+        jsl main ; jsl to save the program bank
+
+
+
+    
+    

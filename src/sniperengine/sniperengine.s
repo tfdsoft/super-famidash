@@ -194,7 +194,7 @@
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_disable_nmi
-    ;;  description: disable's the ppu's nmi signal.
+    ;;  description: disable's the nmi signal.
     ;;  args:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_disable_nmi
@@ -207,7 +207,7 @@
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_enable_nmi
-    ;;  description: disable's the ppu's nmi signal.
+    ;;  description: enable's the nmi signal.
     ;;  args:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_enable_nmi

@@ -28,11 +28,15 @@
 .include "snes.inc"
 
 .segment .string(SE_ZEROPAGE_SEGMENT)
-    
+    se_v_frame_count:         .res 1
+    se_v_vram_update:         .res 1
+    se_v_palette_update:      .res 1
 
 .segment .string(SE_BSS_SEGMENT) : SE_BSS_ADDR_TYPE
-    se_v_ppu_inidisp_var:   .res 1
 
+    se_v_palette_buffer:      .res 512
+
+    se_v_ppu_inidisp_var:   .res 1
 
     se_v_cpu_nmitimen_var:  .res 1
 
@@ -44,10 +48,17 @@
     jmp se_init
 
     ;; PPU ROUTINES
+    jmp se_wait_vsync
+
     jmp se_ppu_disable_nmi
     jmp se_ppu_enable_nmi
 
+    jmp se_ppu_disable_rendering
+    jmp se_ppu_enable_rendering
 
+    jmp se_ppu_set_screen_brightness
+
+    jmp se_ppu_set_palette_color
 
 
 
@@ -123,7 +134,7 @@
     .proc se_init
         php
 
-    ;; INIT CPU REGISTERS ;;
+        ;; INIT CPU REGISTERS ;;
         seta16
         lda #$4200
         tcd ; move direct page to S-CPU I/O area
@@ -137,7 +148,7 @@
         stz VTIMEH  ; and MDMAEN
         sta HDMAEN  ; and MEMSEL. enables FastROM
 
-    ;; INIT PPU REGISTERS ;;
+        ;; INIT PPU REGISTERS ;;
         lda #$2100
         tcd ; move direct page to PPU I/O area
         lda #$0080
@@ -154,19 +165,19 @@
         stz WBGLOG  ; and WOBJLOG
         stz TM      ; and TS
         stz TMW     ; and TSW
-    ; these registers need 8-bit writes
+        ; these registers need 8-bit writes
         seta8
         sta VMAIN
         stz M7SEL
         stz CGADD
         stz W12SEL ; window
-    ; scroll registers need double 8-bit writes
+        ; scroll registers need double 8-bit writes
         .repeat 8, I
             stz BG1HOFS+I
             stz BG1HOFS+I
         .endrepeat
-    ; as do the mode 7 registers, which should be
-    ; set to the indentity matrix:
+        ; as do the mode 7 registers, which should be
+        ; set to the indentity matrix:
         ; [ $0100   $0000 ]
 	    ; [ $0000   $0100 ]
         lda #$01
@@ -183,23 +194,47 @@
         stz M7Y
         stz M7Y
 
-    ; reset direct page back to zeropage
+        ; reset direct page back to zeropage
         setaxy16
         lda #$0000
         tcd
 
-    ; return with register sizes intact
+        ; return with register sizes intact
         plp
         rtl
     .endproc
     
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_wait_vsync
+    ;;  description: halts the cpu until the next nmi finishes
+    ;;  arguments:  none
+    ;;  returns:    none
+    ;;  clobbers:   none
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    .proc se_wait_vsync
+        php
+        seta8
+        lda #1
+        sta se_v_vram_update
+        lda se_v_frame_count
+        @wait:
+            wai
+            cmp se_v_frame_count
+            beq @wait
+        plp
+        rtl
+    .endproc
     
+
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_disable_nmi
     ;;  description: disables the nmi signal.
-    ;;  args:   none
-    ;;  return: none
+    ;;  arguments:  none
+    ;;  returns:    none
+    ;;  clobbers:   A
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_disable_nmi
         php
@@ -209,11 +244,14 @@
         bra __se_ppu_nmitimen_common
     .endproc
 
+
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_enable_nmi
     ;;  description: enables the nmi signal.
-    ;;  args:   none
-    ;;  return: none
+    ;;  arguments:  none
+    ;;  returns:    none
+    ;;  clobbers:   A
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_enable_nmi
         php
@@ -226,6 +264,46 @@
     __se_ppu_nmitimen_common:
         sta se_v_cpu_nmitimen_var
         sta NMITIMEN
+
+        plp
+        rtl
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_disable_rendering
+    ;;  description: disables the screen
+    ;;  arguments:  none
+    ;;  returns:    none
+    ;;  clobbers:   A
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    .proc se_ppu_disable_rendering
+        php
+        seta8
+        lda se_v_ppu_inidisp_var
+        ora #%10000000
+        bra __se_ppu_inidisp_common
+    .endproc
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_enable_rendering
+    ;;  description: enables the screen
+    ;;  arguments:  none
+    ;;  returns:    none
+    ;;  clobbers:   A
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    .proc se_ppu_enable_rendering
+        php
+        seta8
+        lda se_v_ppu_inidisp_var
+        and #%01111111
+        ; fall through
+    .endproc
+
+    __se_ppu_inidisp_common:
+        sta se_v_ppu_inidisp_var
 
         plp
         rtl
@@ -255,10 +333,91 @@
 
 
 
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_set_palette_color
+    ;;  description: set one palette index to an rgb color
+    ;;  arguments:  A16 (rgb color)
+    ;;              X8 (palette index)
+    ;;  returns:    none
+    ;;  clobbers:   A, X
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    .proc se_ppu_set_palette_color
+        .a16
+        php
+        pha
+        txa
+        asl
+        setxy16
+        tax
+        pla
+
+        sta se_v_palette_buffer, x
+        inc se_v_palette_update
+
+        plp
+        rtl
+    .endproc
+
+
 
     .export nmi
     .proc nmi
-        bit $4210
+        jml @goto_fastrom
+        @goto_fastrom:
+        pha
+        phx
+        phy
+        php
+        setaxy8
+        bit NMISTATUS
+
+        ; disable rendering on the ppu side
+        stz INIDISP
+
+        ; is rendering enabled on the engine side?
+        lda se_v_ppu_inidisp_var
+        bmi @skip_all_updates   ; if not, skip everything
+
+            ;; START OF VRAM UPDATES
+            lda se_v_palette_update
+            beq @skip_palette_update
+
+                ;; ok so we need to DMA the updated
+                ;; palette using channel 7
+                stz CGADD
+                seta16
+                setxy8
+                ldx #DMA_00|DMA_FORWARD
+                stx DMAMODE
+                ldx #.lobyte(CGDATA)
+                stx DMAPPUREG
+                lda #.loword(se_v_palette_buffer)
+                sta DMAADDR
+                ldx #^se_v_palette_buffer
+                stx DMAADDRBANK
+                lda #512
+                sta DMALEN
+
+                ldx #1
+                stx COPYSTART
+
+                stz se_v_palette_update
+
+            @skip_palette_update:
+
+            
+
+        @skip_all_updates:
+
+        lda se_v_ppu_inidisp_var
+        sta INIDISP
+        
+        inc se_v_frame_count
+
+        plp
+        ply
+        plx
+        pla
         rti
     .endproc
 

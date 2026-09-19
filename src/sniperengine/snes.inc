@@ -540,14 +540,12 @@ JOY4H  := JOY2B1CUR+1
 ; The upper bits are treated as cleared.
 .macro setxy8
   sep #$10
-  .i8
 .endmacro
 
 ;;
 ; Sets the X and Y registers to use 16-bit values.
 .macro setxy16
   rep #$10
-  .i16
 .endmacro
 
 ;;
@@ -557,7 +555,6 @@ JOY4H  := JOY2B1CUR+1
 ; XBA instruction.
 .macro seta8
   sep #$20
-  .a8
 .endmacro
 
 ;;
@@ -565,23 +562,18 @@ JOY4H  := JOY2B1CUR+1
 ; instructions to use 16-bit data.
 .macro seta16
   rep #$20
-  .a16
 .endmacro
 
 ;;
 ; Equivalent to seta8 and setxy8.
 .macro setaxy8
   sep #$30
-  .a8
-  .i8
 .endmacro
 
 ;;
 ; Equivalent to seta16 and setxy16.
 .macro setaxy16
   rep #$30
-  .a16
-  .i16
 .endmacro
 
 ; Macros to push constant values on the stack to be pulled off

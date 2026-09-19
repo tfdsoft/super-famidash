@@ -31,7 +31,10 @@
     
 
 .segment .string(SE_BSS_SEGMENT) : SE_BSS_ADDR_TYPE
-    se_v_ppu_nmitimen_var:  .res 1
+    se_v_ppu_inidisp_var:   .res 1
+
+
+    se_v_cpu_nmitimen_var:  .res 1
 
 
 .segment .string(SE_ENGINE_SEGMENT)
@@ -194,32 +197,34 @@
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_disable_nmi
-    ;;  description: disable's the nmi signal.
+    ;;  description: disables the nmi signal.
     ;;  args:   none
+    ;;  return: none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_disable_nmi
         php
         seta8
-        lda se_v_ppu_nmitimen_var
+        lda se_v_cpu_nmitimen_var
         and #%01111111
         bra __se_ppu_nmitimen_common
     .endproc
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_enable_nmi
-    ;;  description: enable's the nmi signal.
+    ;;  description: enables the nmi signal.
     ;;  args:   none
+    ;;  return: none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_enable_nmi
         php
         seta8
-        lda se_v_ppu_nmitimen_var
+        lda se_v_cpu_nmitimen_var
         ora #%10000000
         ; fall through
     .endproc
 
     __se_ppu_nmitimen_common:
-        sta se_v_ppu_nmitimen_var
+        sta se_v_cpu_nmitimen_var
         sta NMITIMEN
 
         plp
@@ -227,8 +232,26 @@
 
 
 
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_set_screen_brightness
+    ;;  description: set the brightness of the full palette.
+    ;;  arguments:  A8 (brightness value, 0-15)
+    ;;  returns:    none
+    ;;  clobbers:   A,P,__rc2
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    .proc se_ppu_set_screen_brightness
+        ; mask off the higher bits
+        and #%00001111
+        sta __rc2 ; store to ORA later
 
+        lda se_v_ppu_inidisp_var
+        and #%10000000
+        ora __rc2
+        sta se_v_ppu_inidisp_var
+        ;sta INIDISP
 
+        rtl
+    .endproc
 
 
 

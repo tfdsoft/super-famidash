@@ -39,6 +39,14 @@
 
     @loop:
         jsl SE_WAIT_VSYNC
+
+        seta16
+        setxy8
+        lda #RGB(27,0,14)
+        ldx #0
+        jsl SE_PPU_SET_PALETTE_COLOR
+
+
         bra @loop
 
 

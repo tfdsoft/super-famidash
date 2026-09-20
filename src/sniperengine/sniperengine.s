@@ -373,40 +373,81 @@
     ;;  arguments:  A8 (palette set, 0-15)
     ;;              __rc2,__rc3,__rc4 (pointer to data, 24-bit)
     ;;  returns:    none
-    ;;  clobbers:   X, Y, __rc6, __rc7
+    ;;  clobbers:   X, Y, __rc6-__rc9 (block copy only)
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_set_palette_set
         .a8
-        php
-        pha
-        lda #$10
+        setaxy8
+        tax ; save set index in X for later
+
+        lda #$7e
+        cmp __rc4
+        beq @use_block_copy
+        ina
+        cmp __rc4
+        beq @use_block_copy
+
+        ; set up dma channel 7 for transfer
+        seta16
+        lda quad_asl_lookup_table, x
+        and #$00ff
+        asl
+
+        clc
+        adc #.loword(se_v_palette_buffer)
+        sta WMADDL
+        ldx #^se_v_palette_buffer
+        stx WMADDH
+
+        ldx #DMA_LINEAR|DMA_FORWARD
+        stx DMAMODE+$70
+        ldx #.lobyte(WMDATA)
+        stx DMAPPUREG+$70
+        lda __rc2
+        sta DMAADDR+$70
+        ldx __rc4
+        stx DMAADDRBANK+$70
+        lda #32
+        sta DMALEN+$70
+
+        ldx #%10000000
+        stx COPYSTART
+        bra @exit
+
+
+        @use_block_copy:
+        ; set up registers for transfer
+        lda #$54    ; MVP
         sta __rc6
-        stz __rc7
-        pla
+        lda #^se_v_palette_buffer   ; destination bank
+        sta __rc7
+        lda __rc4   ; source bank
+        sta __rc8
+        lda #$60    ; RTS
+        sta __rc9
+
+
+        lda quad_asl_lookup_table, x
         setaxy16
-        and #$000f
+        and #$00ff
         asl
-        asl
-        asl
-        asl
-        asl
-        tax
-        ldy #$0000
 
-        @loop:
-            lda [__rc2], y
-            sta se_v_palette_buffer, x
-            inx
-            inx
-            iny
-            iny
-            dec __rc6
-            bne @loop
+        clc
+        adc #.loword(se_v_palette_buffer)
+        tay
 
+        ldx __rc2
+
+        lda #$001f
+
+        phb
+        jsr __rc6
+        plb
+        
+        @exit:
         seta8
         inc se_v_palette_update
 
-        plp
         rtl
     .endproc
 
@@ -480,3 +521,10 @@
         bit $4211
         rti
     .endproc
+
+
+
+
+    quad_asl_lookup_table:
+        .byte $00, $10, $20, $30, $40, $50, $60, $70
+        .byte $80, $90, $a0, $b0, $c0, $d0, $e0, $f0

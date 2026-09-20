@@ -62,6 +62,7 @@
     jmp se_ppu_enable_rendering
 
     jmp se_ppu_set_screen_brightness
+    jmp se_ppu_fade_screen_brightness
 
     jmp se_ppu_set_palette_color
     jmp se_ppu_set_palette_set
@@ -339,6 +340,63 @@
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_fade_screen_brightness
+    ;;  description: fade from one brightness level to another
+    ;;  arguments:  A8 (start value), X8 (end value)
+    ;;  returns:    none
+    ;;  clobbers:   Y, P
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    .proc se_ppu_fade_screen_brightness
+        .a8
+        .i8
+        phy
+        ldy __rc20
+        phy
+        ldy __rc21
+        phy 
+        stx __rc20 ;to
+        sta __rc21 ;from
+
+        bra @check_equal
+
+        @fade_loop:
+            jsl se_wait_vsync
+
+            lda __rc21
+            cmp __rc20
+            bcs @more
+
+        @less:
+            clc
+            adc #1
+            sta __rc21
+            jsl se_ppu_set_screen_brightness
+            bra @check_equal
+
+        @more:
+            sec
+            sbc #1
+            sta __rc21
+            jsl se_ppu_set_screen_brightness
+
+        @check_equal:
+            lda __rc21
+            cmp __rc20
+            bne @fade_loop
+
+        @done:
+        ply
+        sty __rc21
+        ply
+        sty __rc20
+        ply
+
+        rtl
+    .endproc
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_set_palette_color
     ;;  description: set one palette index to an rgb color
     ;;  arguments:  A16 (rgb color)
@@ -456,6 +514,7 @@
 
     .export nmi
     .proc nmi
+        phb
         jml @goto_fastrom
         @goto_fastrom:
         pha
@@ -512,6 +571,7 @@
         ply
         plx
         pla
+        plb
         rti
     .endproc
 

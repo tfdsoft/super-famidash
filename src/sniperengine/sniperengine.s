@@ -20,23 +20,28 @@
 ;; you shouldn't have to touch anything below this.
 ;;
 
-.import __rc0,  __rc1,  __rc2,  __rc3,  __rc4,  __rc5,  __rc6,  __rc7
-.import __rc8,  __rc9,  __rc10, __rc11, __rc12, __rc13, __rc14, __rc15
-.import __rc16, __rc17, __rc18, __rc19, __rc20, __rc21, __rc22, __rc23
-.import __rc24, __rc25, __rc26, __rc27, __rc28, __rc29, __rc30, __rc31
+.importzp __rc0,  __rc1,  __rc2,  __rc3,  __rc4,  __rc5,  __rc6,  __rc7
+.importzp __rc8,  __rc9,  __rc10, __rc11, __rc12, __rc13, __rc14, __rc15
+.importzp __rc16, __rc17, __rc18, __rc19, __rc20, __rc21, __rc22, __rc23
+.importzp __rc24, __rc25, __rc26, __rc27, __rc28, __rc29, __rc30, __rc31
 
 .include "snes.inc"
 
 .segment .string(SE_ZEROPAGE_SEGMENT)
-    se_v_frame_count:         .res 1
-    se_v_vram_update:         .res 1
-    se_v_palette_update:      .res 1
+    se_v_frame_count:       .res 1
+    se_v_vram_update:       .res 1
+    se_v_palette_update:    .res 1
 
 .segment .string(SE_BSS_SEGMENT) : SE_BSS_ADDR_TYPE
 
-    se_v_palette_buffer:      .res 512
+    se_v_palette_buffer:    .res 512
 
     se_v_ppu_inidisp_var:   .res 1
+    se_v_ppu_objsel_var:    .res 1
+    se_v_ppu_bgmode_var:    .res 1
+    se_v_ppu_bgXsc_var:     .res 4
+    se_v_ppu_bg12nba_var:   .res 1
+    se_v_ppu_bg34nba_var:   .res 1
 
     se_v_cpu_nmitimen_var:  .res 1
 
@@ -59,7 +64,7 @@
     jmp se_ppu_set_screen_brightness
 
     jmp se_ppu_set_palette_color
-
+    jmp se_ppu_set_palette_set
 
 
 
@@ -339,7 +344,7 @@
     ;;  arguments:  A16 (rgb color)
     ;;              X8 (palette index)
     ;;  returns:    none
-    ;;  clobbers:   A, X
+    ;;  clobbers:   X
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_set_palette_color
         .a16
@@ -352,11 +357,59 @@
         pla
 
         sta se_v_palette_buffer, x
+
+        seta8
         inc se_v_palette_update
 
         plp
         rtl
     .endproc
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_set_palette_set
+    ;;  description: set a palette set (16 colors)
+    ;;  arguments:  A8 (palette set, 0-15)
+    ;;              __rc2,__rc3,__rc4 (pointer to data, 24-bit)
+    ;;  returns:    none
+    ;;  clobbers:   X, Y, __rc6, __rc7
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    .proc se_ppu_set_palette_set
+        .a8
+        php
+        pha
+        lda #$10
+        sta __rc6
+        stz __rc7
+        pla
+        setaxy16
+        and #$000f
+        asl
+        asl
+        asl
+        asl
+        asl
+        tax
+        ldy #$0000
+
+        @loop:
+            lda [__rc2], y
+            sta se_v_palette_buffer, x
+            inx
+            inx
+            iny
+            iny
+            dec __rc6
+            bne @loop
+
+        seta8
+        inc se_v_palette_update
+
+        plp
+        rtl
+    .endproc
+
 
 
 
@@ -388,17 +441,17 @@
                 seta16
                 setxy8
                 ldx #DMA_00|DMA_FORWARD
-                stx DMAMODE
+                stx DMAMODE+$70
                 ldx #.lobyte(CGDATA)
-                stx DMAPPUREG
+                stx DMAPPUREG+$70
                 lda #.loword(se_v_palette_buffer)
-                sta DMAADDR
+                sta DMAADDR+$70
                 ldx #^se_v_palette_buffer
-                stx DMAADDRBANK
+                stx DMAADDRBANK+$70
                 lda #512
-                sta DMALEN
+                sta DMALEN+$70
 
-                ldx #1
+                ldx #%10000000
                 stx COPYSTART
 
                 stz se_v_palette_update

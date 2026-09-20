@@ -27,30 +27,30 @@
         jsl SE_PPU_SET_SCREEN_BRIGHTNESS
 
         seta16
-        setxy8
-        lda #$0000
-        tax
+        lda #.loword(d_super_cool_palette)
+        sta __rc2
+        seta8
+        lda #^d_super_cool_palette
+        sta __rc4
+        lda #1
+        jsl SE_PPU_SET_PALETTE_SET
 
+        
 
     @loop:
-        jsl SE_PPU_SET_PALETTE_COLOR
-        ina
-        pha
         jsl SE_WAIT_VSYNC
-        jsl SE_WAIT_VSYNC
-        jsl SE_WAIT_VSYNC
-        jsl SE_WAIT_VSYNC
-        pla
         bra @loop
-
-
-
-
-
-
-
 
 
 
 ignore_interrupt:
     rti
+
+
+.segment "BANK_C1"
+d_super_cool_palette:
+    .word RGB(31,31,31), RGB(30,30,30), RGB(29,29,29), RGB(28,28,28)
+    .word RGB(27,27,27), RGB(26,26,26), RGB(25,25,25), RGB(24,24,24)
+
+
+

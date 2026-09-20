@@ -33,14 +33,14 @@
         seta16
         setxy8
         ldx #DMA_LINEAR|DMA_CONST
-        stx DMAMODE
+        stx DMAMODE+$70
         ldx #.lobyte(WMDATA)
-        stx DMAPPUREG
+        stx DMAPPUREG+$70
         lda #.loword(SE_IDENTITY_TABLE+0)
-        sta DMAADDR
+        sta DMAADDR+$70
         ldx #^SE_IDENTITY_TABLE+0
-        stx DMAADDRBANK
-        stz DMALEN ; 0 length = $10000
+        stx DMAADDRBANK+$70
+        stz DMALEN+$70  ; 0 length = $10000
 
         ldx #1  ; channel 0 (1 << n)
         stx COPYSTART   ; start the transfer

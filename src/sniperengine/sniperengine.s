@@ -2,8 +2,8 @@
 ;; CONFIG
 ;;
 .define SE_ZEROPAGE_SEGMENT ZEROPAGE
-.define SE_BSS_SEGMENT      HIRAM1
-.define SE_BSS_ADDR_TYPE    far
+.define SE_BSS_SEGMENT      RAM
+.define SE_BSS_ADDR_TYPE    
 .define SE_ENGINE_SEGMENT   SNIPERENGINE
 
 
@@ -32,7 +32,7 @@
     se_v_vram_update:       .res 1
     se_v_palette_update:    .res 1
 
-.segment .string(SE_BSS_SEGMENT) : SE_BSS_ADDR_TYPE
+.segment .string(SE_BSS_SEGMENT) ;: SE_BSS_ADDR_TYPE
 
     se_v_palette_buffer:    .res 512
 
@@ -66,8 +66,7 @@
 
     jmp se_ppu_set_palette_color
     jmp se_ppu_set_palette_set
-
-
+    jmp se_ppu_clear_palette
 
 
 
@@ -217,7 +216,7 @@
     ;;  description: halts the cpu until the next nmi finishes
     ;;  arguments:  none
     ;;  returns:    none
-    ;;  clobbers:   none
+    ;;  clobbers:   A
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_wait_vsync
         php
@@ -240,10 +239,9 @@
     ;;  description: disables the nmi signal.
     ;;  arguments:  none
     ;;  returns:    none
-    ;;  clobbers:   A
+    ;;  clobbers:   A,P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_disable_nmi
-        php
         seta8
         lda se_v_cpu_nmitimen_var
         and #%01111111
@@ -257,10 +255,9 @@
     ;;  description: enables the nmi signal.
     ;;  arguments:  none
     ;;  returns:    none
-    ;;  clobbers:   A
+    ;;  clobbers:   A,P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_enable_nmi
-        php
         seta8
         lda se_v_cpu_nmitimen_var
         ora #%10000000
@@ -271,7 +268,6 @@
         sta se_v_cpu_nmitimen_var
         sta NMITIMEN
 
-        plp
         rtl
 
 
@@ -281,14 +277,13 @@
     ;;  description: disables the screen
     ;;  arguments:  none
     ;;  returns:    none
-    ;;  clobbers:   A
+    ;;  clobbers:   A,P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_disable_rendering
-        php
         seta8
-        lda se_v_ppu_inidisp_var
-        ora #%10000000
-        bra __se_ppu_inidisp_common
+        lda #%10000000
+        trb se_v_ppu_inidisp_var
+        rtl
     .endproc
 
 
@@ -298,32 +293,31 @@
     ;;  description: enables the screen
     ;;  arguments:  none
     ;;  returns:    none
-    ;;  clobbers:   A
+    ;;  clobbers:   A,P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_enable_rendering
-        php
         seta8
-        lda se_v_ppu_inidisp_var
-        and #%01111111
-        ; fall through
+        lda #%01111111
+        tsb se_v_ppu_inidisp_var
+        rtl
     .endproc
 
     __se_ppu_inidisp_common:
         sta se_v_ppu_inidisp_var
 
-        plp
         rtl
 
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_set_screen_brightness
-    ;;  description: set the brightness of the full palette.
+    ;;  description: set the brightness of the screen.
     ;;  arguments:  A8 (brightness value, 0-15)
     ;;  returns:    none
-    ;;  clobbers:   A,P,__rc2
+    ;;  clobbers:   P,__rc2
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_set_screen_brightness
+        .a8
         ; mask off the higher bits
         and #%00001111
         sta __rc2 ; store to ORA later
@@ -344,7 +338,7 @@
     ;;  description: fade from one brightness level to another
     ;;  arguments:  A8 (start value), X8 (end value)
     ;;  returns:    none
-    ;;  clobbers:   Y, P
+    ;;  clobbers:   Y,P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_fade_screen_brightness
         .a8
@@ -356,6 +350,7 @@
         phy 
         stx __rc20 ;to
         sta __rc21 ;from
+        jsl se_ppu_set_screen_brightness
 
         bra @check_equal
 
@@ -385,6 +380,7 @@
             bne @fade_loop
 
         @done:
+
         ply
         sty __rc21
         ply
@@ -406,6 +402,7 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_set_palette_color
         .a16
+        .i8
         php
         pha
         txa
@@ -429,9 +426,9 @@
     ;;  se_ppu_set_palette_set
     ;;  description: set a palette set (16 colors)
     ;;  arguments:  A8 (palette set, 0-15)
-    ;;              __rc2,__rc3,__rc4 (pointer to data, 24-bit)
+    ;;              __rc2-__rc4 (pointer to data, 24-bit)
     ;;  returns:    none
-    ;;  clobbers:   X, Y, __rc6-__rc9 (block copy only)
+    ;;  clobbers:   X,Y,__rc6-__rc9
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_set_palette_set
         .a8
@@ -510,6 +507,40 @@
     .endproc
 
 
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_clear_palette
+    ;;  description: set whole palette to black
+    ;;  arguments:  none
+    ;;  returns:    none
+    ;;  clobbers:   
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    .proc se_ppu_clear_palette
+        ; set up dma channel 7 for transfer
+        seta16
+        setxy8
+
+        lda #.loword(se_v_palette_buffer)
+        sta WMADDL
+        ldx #^se_v_palette_buffer
+        stx WMADDH
+
+        ldx #DMA_LINEAR|DMA_CONST
+        stx DMAMODE+$70
+        ldx #.lobyte(WMDATA)
+        stx DMAPPUREG+$70
+        lda #.loword(se_identity_table)
+        sta DMAADDR+$70
+        ldx #^se_identity_table
+        stx DMAADDRBANK+$70
+        lda #512
+        sta DMALEN+$70
+
+        ldx #%10000000
+        stx COPYSTART
+
+        rtl
+    .endproc
 
 
     .export nmi

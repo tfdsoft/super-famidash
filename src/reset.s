@@ -36,13 +36,13 @@
         stx DMAMODE+$70
         ldx #.lobyte(WMDATA)
         stx DMAPPUREG+$70
-        lda #.loword(SE_IDENTITY_TABLE+0)
+        lda #.loword(zero)
         sta DMAADDR+$70
-        ldx #^SE_IDENTITY_TABLE+0
+        ldx #^zero
         stx DMAADDRBANK+$70
         stz DMALEN+$70  ; 0 length = $10000
 
-        ldx #1  ; channel 0 (1 << n)
+        ldx #128      ; channel 0 (1 << n)
         stx COPYSTART   ; start the transfer
         stx COPYSTART   ; do it again!
 
@@ -50,12 +50,13 @@
     ;;  TODO: add more clear routines here
     ;
 
-    jsl SE_PPU_ENABLE_NMI
+        jsl SE_PPU_ENABLE_NMI
     ; go to wherever main is
         setaxy8
         jsl main ; jsl to save the program bank
 
 
 
-    
+    zero:
+        .byte $0
     

@@ -5,7 +5,11 @@
 .include "vectors.s"
 .include "registers.s"
 
+
+.include "metatiles.s"
+
 .include "reset.s"
+
 
 
 .segment "RAM"
@@ -19,9 +23,9 @@
 
 .segment "CODE"
     main:
-        jsl SE_PPU_ENABLE_NMI
         jsl SE_PPU_ENABLE_RENDERING
 
+        jsl SE_PPU_CLEAR_PALETTE
         seta8
         lda #15
         jsl SE_PPU_SET_SCREEN_BRIGHTNESS
@@ -32,7 +36,8 @@
         seta8
         lda #^d_super_cool_palette
         sta __rc4
-        lda #1
+        wdm #0
+        lda #0
         jsl SE_PPU_SET_PALETTE_SET
 
         

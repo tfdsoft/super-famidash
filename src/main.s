@@ -12,7 +12,7 @@
 
 
 
-.segment "RAM"
+.segment "BSS"
     test: .res 1
     
 .segment "HIRAM1"   : far

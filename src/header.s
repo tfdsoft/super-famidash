@@ -8,13 +8,13 @@
     ;          +----- Speed: 0=slow, 1=fast
     
     ; hardware in the cart
-    .byte  $00  ; $00 - ROM only
+    .byte  $02  ; $02 - ROM + RAM + battery
 
     ; rom size (2^N)kb
     .byte   12  ; 2^12 = 4096kb = 4mb
 
     ; ram size (2^N)kb
-    .byte   0   ; 2^0 = 1kb
+    .byte   3   ; 2^3 = 8kb
 
     ; region
     .byte   $0e ; $0e = worldwide (common)

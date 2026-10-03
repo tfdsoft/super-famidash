@@ -11,7 +11,7 @@
     .byte  $00  ; $00 - ROM only
 
     ; rom size (2^N)kb
-    .byte   10  ; 2^10 = 1024kb = 1mb
+    .byte   12  ; 2^12 = 4096kb = 4mb
 
     ; ram size (2^N)kb
     .byte   0   ; 2^0 = 1kb

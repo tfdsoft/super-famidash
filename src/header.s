@@ -3,8 +3,8 @@
     .byte "Super Famidash       "
 
     ; mapping mode
-    .byte  %00110001
-    ;          |++++- Map mode (1=HiROM)
+    .byte  %00110101
+    ;          |++++- Map mode (5=ExHiROM)
     ;          +----- Speed: 0=slow, 1=fast
     
     ; hardware in the cart

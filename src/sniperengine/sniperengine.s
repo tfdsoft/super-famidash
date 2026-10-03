@@ -74,8 +74,23 @@
     .align 128  ; SNESMOD STUFF
 
     jmp spcBoot
+	
+	jmp spcSetBank
+	jmp spcLoad
+	jmp spcTest
+	jmp spcPlay
+	jmp spcStop
+	jmp spcReadStatus
+	jmp spcReadPosition
+	jmp spcGetCues
 
+	jmp spcSetModuleVolume
+	jmp spcFadeModuleVolume
+	jmp spcLoadEffect
+	jmp spcEffect
 
+	jmp spcFlush
+	jmp spcProcess
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -855,7 +870,7 @@ sb_start:
 ;**********************************************************************
 spcSetBank:
 	sta	spc_bank
-	rts
+	rtl
 	
 ; increment memory pointer by 2
 .macro incptr
@@ -888,7 +903,7 @@ spcLoad:
 ;----------------------------------------------------------------------
 
 	phx				; flush fifo!
-	jsr	spcFlush		;
+	jsl	spcFlush		;
 	plx				;
 	
 	phx
@@ -984,7 +999,7 @@ transfer_sources:
 	stz	spc_sfx_next	; reset sfx counter
 	
 	
-	rts
+	rtl
 	
 ;--------------------------------------------------------------
 ; spc1 = source index
@@ -1145,7 +1160,7 @@ QueueMessage:
 	stx	spc_fwrite		;
 	rep	#10h			;
 	cli				;
-	rts				;
+	rtl				;
 
 ;**********************************************************************
 ; flush fifo (force sync)
@@ -1157,7 +1172,7 @@ spcFlush:
 	beq	@exit			;
 	jsr	spcProcessMessages	;
 	bra	spcFlush		;
-@exit:	rts				;
+@exit:	rtl				;
 	
 	
 ;**********************************************************************
@@ -1221,7 +1236,7 @@ spcProcessMessages:
 @exit:
 ;----------------------------------------------------------------------
 	rep	#10h			; restore 16-bit index
-	rts				;
+	rtl				;
 	
 ;**********************************************************************
 ; x = starting position
@@ -1298,7 +1313,9 @@ spcGetCues:
 ;**********************************************************************
 spcSetModuleVolume:
 ;**********************************************************************
-	txa				;queue:
+	;mukunda why would you ever put an
+	;8-bit value in 16-bit X
+	txa					;queue:
 	sta	spc1+1			; id -- vv
 	lda	#CMD_MVOL		;
 	jmp	QueueMessage		;

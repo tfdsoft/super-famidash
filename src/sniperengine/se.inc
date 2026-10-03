@@ -22,6 +22,23 @@ SE_PPU_CLEAR_PALETTE =          SE_BASE_ADDRESS + $1e
 
 
 SPC_BOOT =                  SE_BASE_ADDRESS + $80
+SPC_SET_BANK =              SE_BASE_ADDRESS + $83
+SPC_LOAD =                  SE_BASE_ADDRESS + $86
+SPC_TEST =                  SE_BASE_ADDRESS + $89
+SPC_PLAY =                  SE_BASE_ADDRESS + $8c
+SPC_STOP =                  SE_BASE_ADDRESS + $8f
+SPC_READ_STATUS =           SE_BASE_ADDRESS + $92
+SPC_READ_POSITION =         SE_BASE_ADDRESS + $95
+SPC_GET_CUES =              SE_BASE_ADDRESS + $98
+
+SPC_SET_MODULE_VOLUME =     SE_BASE_ADDRESS + $9b
+SPC_FADE_MODULE_VOLUME =    SE_BASE_ADDRESS + $9e
+SPC_LOAD_EFFECT =           SE_BASE_ADDRESS + $a1
+SPC_EFFECT =                SE_BASE_ADDRESS + $a4
+
+SPC_FLUSH =                 SE_BASE_ADDRESS + $a7
+SPC_PROCESS =               SE_BASE_ADDRESS + $aa
+
 
 
 SE_IDENTITY_TABLE =     SE_BASE_ADDRESS + $100

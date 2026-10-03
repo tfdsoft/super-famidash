@@ -6,10 +6,12 @@
 .include "vectors.s"
 .include "registers.s"
 
-
-.include "metatiles.s"
-
 .include "reset.s"
+
+
+;; pretty much everything you want your game to use
+;; goes in assets.s
+.include "assets.s"
 
 
 
@@ -37,32 +39,62 @@
         seta8
         lda #^d_super_cool_palette
         sta __rc4
-        wdm #0
         lda #0
         jsl SE_PPU_SET_PALETTE_SET
 
 
+        seta16
+        setxy8
+        lda #RGB(31,0,0)
+        ldx #0
+        jsl SE_PPU_SET_PALETTE_COLOR
 
-
-
-        setxy16
+        ; load music lmao
         seta8
-        php
-        jsl SPC_BOOT
-        plp
+        setxy16
+        wdm #0
 
+        jsl SE_PPU_DISABLE_NMI
+        jsl SPC_BOOT
+        jsl SE_PPU_ENABLE_NMI
+
+        lda #^song_yourmom
+        jsl SPC_SET_BANK
+
+        ldx #0
+        jsl SPC_LOAD
+
+        jsl SPC_PROCESS
+
+        ldx #0
+        jsl SPC_PLAY
+
+        ldx #$00ff
+        jsl SPC_SET_MODULE_VOLUME
+
+        jsl SPC_PROCESS
+
+        seta16
+        setxy8
+        lda #RGB(31,31,31)
+        ldx #0
+        jsl SE_PPU_SET_PALETTE_COLOR
         
 
     @loop:
         jsl SE_WAIT_VSYNC
 
-        seta8
-        setxy8
+        ;seta8
+        ;setxy16
+        jsl SPC_PROCESS
 
-        lda #15
-        ldx #0
+        ;seta8
+        ;setxy8
 
-        jsl SE_PPU_FADE_SCREEN_BRIGHTNESS
+        ;lda #15
+        ;ldx #0
+
+        ;jsl SE_PPU_FADE_SCREEN_BRIGHTNESS
         ;lda #RGB(27,0,14)
         ;ldx #0
         ;jsl SE_PPU_SET_PALETTE_COLOR
@@ -75,11 +107,6 @@
 ignore_interrupt:
     rti
 
-
-.segment "BANK_C1"
-d_super_cool_palette:
-    .word RGB(31,31,31), RGB(30,30,30), RGB(29,29,29), RGB(28,28,28)
-    .word RGB(27,27,27), RGB(26,26,26), RGB(25,25,25), RGB(24,24,24)
 
 
 

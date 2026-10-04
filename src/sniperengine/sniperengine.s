@@ -561,8 +561,9 @@
     .export nmi
     .proc nmi
         phb
-        jml @goto_fastrom
-        @goto_fastrom:
+		; not needed anymore due to exhirom
+        ; jml @goto_fastrom
+        ; @goto_fastrom:
         pha
         phx
         phy

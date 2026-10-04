@@ -84,8 +84,8 @@
     @loop:
         jsl SE_WAIT_VSYNC
 
-        ;seta8
-        ;setxy16
+        seta8
+        setxy16
         jsl SPC_PROCESS
 
         ;seta8

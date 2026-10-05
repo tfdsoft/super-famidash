@@ -1,9 +1,6 @@
 .segment "INIT" ; you get 4kb in this section, make it count
 
     reset:
-        jml @goto_fastrom ; this also sets the program bank
-
-    @goto_fastrom:
     ; switch to native mode
         sei 
         clc 
@@ -50,7 +47,7 @@
     ;;  TODO: add more clear routines here
     ;
 
-        jsl SE_PPU_ENABLE_NMI
+        jsl SE_CPU_ENABLE_NMI
     ; go to wherever main is
         setaxy8
         jsl main ; jsl to save the program bank

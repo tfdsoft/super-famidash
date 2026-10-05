@@ -56,7 +56,7 @@
     jmp se_wait_vsync
 
     jmp se_ppu_disable_nmi
-    jmp se_ppu_enable_nmi
+    jmp SE_CPU_ENABLE_NMI
 
     jmp se_ppu_disable_rendering
     jmp se_ppu_enable_rendering
@@ -266,13 +266,13 @@
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;  se_ppu_enable_nmi
+    ;;  SE_CPU_ENABLE_NMI
     ;;  description: enables the nmi signal.
     ;;  arguments:  none
     ;;  returns:    none
     ;;  clobbers:   A,P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    .proc se_ppu_enable_nmi
+    .proc SE_CPU_ENABLE_NMI
         seta8
         lda se_v_cpu_nmitimen_var
         ora #%10000000

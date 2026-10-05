@@ -26,7 +26,7 @@
 
 .segment "CODE"
     main:
-        jsl SE_PPU_ENABLE_RENDERING
+        DMA_VRAM 32768, chr_level_bg01, $0000
 
         jsl SE_PPU_CLEAR_PALETTE
         seta8
@@ -49,14 +49,13 @@
         ldx #0
         jsl SE_PPU_SET_PALETTE_COLOR
 
+
         ; load music lmao
         seta8
         setxy16
-        wdm #0
-
         jsl SE_PPU_DISABLE_NMI
         jsl SPC_BOOT
-        jsl SE_PPU_ENABLE_NMI
+        jsl SE_CPU_ENABLE_NMI
 
         lda #^song_yourmom
         jsl SPC_SET_BANK
@@ -74,12 +73,14 @@
 
         jsl SPC_PROCESS
 
+
         seta16
         setxy8
-        lda #RGB(31,31,31)
+        lda d_super_cool_palette
         ldx #0
         jsl SE_PPU_SET_PALETTE_COLOR
         
+
 
     @loop:
         jsl SE_WAIT_VSYNC

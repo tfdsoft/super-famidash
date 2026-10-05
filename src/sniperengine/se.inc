@@ -7,7 +7,7 @@ SE_INIT =                   SE_BASE_ADDRESS
 SE_WAIT_VSYNC =             SE_BASE_ADDRESS + $03
 
 SE_PPU_DISABLE_NMI =        SE_BASE_ADDRESS + $06
-SE_PPU_ENABLE_NMI =         SE_BASE_ADDRESS + $09
+SE_CPU_ENABLE_NMI =         SE_BASE_ADDRESS + $09
 
 SE_PPU_DISABLE_RENDERING =  SE_BASE_ADDRESS + $0c
 SE_PPU_ENABLE_RENDERING =   SE_BASE_ADDRESS + $0f
@@ -42,3 +42,58 @@ SPC_PROCESS =               SE_BASE_ADDRESS + $aa
 
 
 SE_IDENTITY_TABLE =     SE_BASE_ADDRESS + $100
+
+
+
+
+
+
+;; block move macro (credit to nesdoug)
+; memcpy, block move
+;for WRAM to WRAM data transfers (can't be done with DMA)
+.macro BLOCK_MOVE  length, src_addr, dst_addr
+;mnv changes the data bank register, need to preserve it
+	phb
+    .if .asize = 8
+        rep #$30
+    .elseif .isize = 8
+        rep #$30
+    .endif
+	lda #(length-1)
+	ldx #.loword(src_addr)
+	ldy #.loword(dst_addr)	
+;	mvn src_bank, dst_bank
+	.byte $54, ^dst_addr, ^src_addr
+	plb
+.endmacro
+.define memcpy(to,from,count) BLOCK_MOVE count, from, to
+
+
+;; dma macro (credit to nesdoug)
+.macro DMA_VRAM  length, src_addr, dst_addr
+;dst is address in the VRAM
+;a should be 8 bit, xy should be 16 bit
+    .if .asize = 16
+        sep #$20
+    .endif
+    .if .isize = 8
+        rep #$10
+    .endif
+	ldx #dst_addr
+	stx $2116 ; vram address
+	
+	lda #1
+	sta $4370 ; transfer mode, 2 registers 1 write
+			  ; $2118 and $2119 are a pair Low/High
+	lda #$18  ; $2118
+	sta $4371 ; destination, vram data
+	ldx #.loword(src_addr)
+	stx $4372 ; source
+	lda #^src_addr
+	sta $4374 ; bank
+	ldx #length
+	stx $4375 ; length
+	lda #%10000000
+	sta $420b ; start dma, channel 7
+.endmacro
+.define memcpy_to_vram(to,from,count) DMA_VRAM count, from, to

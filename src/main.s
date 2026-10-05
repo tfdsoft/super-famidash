@@ -57,7 +57,7 @@
         jsl SPC_BOOT
         jsl SE_CPU_ENABLE_NMI
 
-        lda #^song_yourmom
+        lda #^song_menu_theme
         jsl SPC_SET_BANK
 
         ldx #0

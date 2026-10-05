@@ -4,7 +4,7 @@
 ;;  The Almighty Assets File:tm:
 ;;  if your game needs it, put it in here.
 ;;  ============================================================
-;;  Valid bank numbers are as follows,
+;;  Valid bank numbers are as follows:
 ;;  - 3E-3F (32kb, slow)
 ;;  - 40-7D (64kb, slow)
 ;;  - C1-FF (64kb, fast)
@@ -22,7 +22,7 @@
 
 
 .segment "BANK_40" : far
-    song_yourmom:
+    song_menu_theme:
         .incbin "music/exports/test.bank"
 
 

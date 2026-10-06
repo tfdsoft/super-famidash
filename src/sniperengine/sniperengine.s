@@ -564,6 +564,24 @@
     .endproc
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+	__se_get_controllers:
+		
+
+
+
+
     .export nmi
     .proc nmi
         phb

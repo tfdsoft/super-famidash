@@ -70,17 +70,15 @@
         ldy #.LOWORD(sfx_SoundTable)
         jsl SPC_SET_SOUND_TABLE
 
-        jsl SPC_PROCESS
-
-        ldx #0
-        jsl SPC_PLAY
+        ;ldx #0
+        ;jsl SPC_PLAY
 
         ldx #$3f
         jsl SPC_SET_MODULE_VOLUME
 
         jsl SPC_PROCESS
 
-        lda #1
+        lda #0
         jsl SPC_PLAY_SOUND
 
         seta16
@@ -97,7 +95,7 @@
         lda #0
         ldx #15
         jsl SE_PPU_FADE_SCREEN_BRIGHTNESS
-        
+
 
     @loop:
         jsl SE_WAIT_VSYNC

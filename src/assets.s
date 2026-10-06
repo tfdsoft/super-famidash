@@ -29,21 +29,28 @@
 .segment "BANK_40" : far
     sfx_SoundTable:
 
-    sfx_endStart_02 = 0
+    sfx_boot = 0
+        .byte 6
+        .byte 8
+        .byte 15
+        .word (sfx_boot_end-sfx_boot_start)/9
+        .word .loword(sfx_boot_start)
+        .byte ^sfx_boot_start
+    sfx_endStart_02 = 1
         .byte 2
         .byte 8
         .byte 15
         .word (sfx_endStart_02_end-sfx_endStart_02_start)/9
         .word .loword(sfx_endStart_02_start)
         .byte ^sfx_endStart_02_start
-    sfx_playSound_01 = 1
+    sfx_playSound_01 = 2
         .byte 4
         .byte 8
         .byte 15
         .word (sfx_playSound_01_end-sfx_playSound_01_start)/9
         .word .loword(sfx_playSound_01_start)
         .byte ^sfx_playSound_01_start
-    sfx_quitSound_01 = 2
+    sfx_quitSound_01 = 3
         .byte 4
         .byte 8
         .byte 15
@@ -52,7 +59,9 @@
         .byte ^sfx_quitSound_01_start
 
 
-
+    sfx_boot_start:
+        .incbin "music/sfx/boot.brr"
+    sfx_boot_end:
     sfx_endStart_02_start:
         .incbin "music/sfx/endStart_02.brr"
     sfx_endStart_02_end:

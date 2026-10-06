@@ -22,6 +22,10 @@
         .incbin "chr/level_bg01_tileset.chr"
 
 
+
+
+
+
 .segment "BANK_40" : far
     sfx_SoundTable:
 
@@ -32,12 +36,36 @@
         .word (sfx_endStart_02_end-sfx_endStart_02_start)/9
         .word .loword(sfx_endStart_02_start)
         .byte ^sfx_endStart_02_start
+    sfx_playSound_01 = 1
+        .byte 4
+        .byte 8
+        .byte 15
+        .word (sfx_playSound_01_end-sfx_playSound_01_start)/9
+        .word .loword(sfx_playSound_01_start)
+        .byte ^sfx_playSound_01_start
+    sfx_quitSound_01 = 2
+        .byte 4
+        .byte 8
+        .byte 15
+        .word (sfx_quitSound_01_end-sfx_quitSound_01_start)/9
+        .word .loword(sfx_quitSound_01_start)
+        .byte ^sfx_quitSound_01_start
 
 
 
     sfx_endStart_02_start:
         .incbin "music/sfx/endStart_02.brr"
     sfx_endStart_02_end:
+    sfx_playSound_01_start:
+        .incbin "music/sfx/playSound_01.brr"
+    sfx_playSound_01_end:
+    sfx_quitSound_01_start:
+        .incbin "music/sfx/quitSound_01.brr"
+    sfx_quitSound_01_end:
+
+
+
+
 
 
 .segment "BANK_41" : far

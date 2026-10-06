@@ -80,6 +80,9 @@
 
         jsl SPC_PROCESS
 
+        lda #2
+        jsl SPC_PLAY_SOUND
+
         seta16
         setxy8
         lda d_super_cool_palette
@@ -94,12 +97,7 @@
         lda #0
         ldx #15
         jsl SE_PPU_FADE_SCREEN_BRIGHTNESS
-
-
         
-        setxy16
-        lda #sfx_endStart_02
-        jsl SPC_PLAY_SOUND
 
     @loop:
         jsl SE_WAIT_VSYNC

@@ -1,6 +1,6 @@
 .segment "SNESHEADER"
     ; name of the rom, must be 21 characters long
-    .byte "Super Famidash       "
+    .byte "Super Geometry Dash  "
 
     ; mapping mode
     .byte  %00110101

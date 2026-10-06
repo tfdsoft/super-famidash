@@ -22,7 +22,7 @@
         .incbin "chr/level_bg01_tileset.chr"
 
 
-.segment "BANK_40"
+.segment "BANK_40" : far
     sfx_SoundTable:
 
     sfx_endStart_02 = 0

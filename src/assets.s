@@ -13,6 +13,8 @@
 
 ; BANK_3E and BANK_3F are 32kb wide; put unimportant stuff in 'em
 .segment "BANK_3E" : far
+    chr_title_screen:
+        .incbin "chr/title_screen.chr"
     
 
 .segment "BANK_3F" : far
@@ -20,10 +22,28 @@
         .incbin "chr/level_bg01_tileset.chr"
 
 
+.segment "BANK_40"
+    sfx_SoundTable:
 
-.segment "BANK_40" : far
+    sfx_endStart_02 = 0
+        .byte 2
+        .byte 8
+        .byte 15
+        .word (sfx_endStart_02_end-sfx_endStart_02_start)/9
+        .word .loword(sfx_endStart_02_start)
+        .byte ^sfx_endStart_02_start
+
+
+
+    sfx_endStart_02_start:
+        .incbin "music/sfx/endStart_02.brr"
+    sfx_endStart_02_end:
+
+
+.segment "BANK_41" : far
     song_menu_theme:
         .incbin "music/exports/test.bank"
+    
 
 
 ;.segment "BANK_C0"

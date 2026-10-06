@@ -26,11 +26,11 @@
 
 .segment "CODE"
     main:
-        DMA_VRAM 32768, chr_level_bg01, $0000
+        DMA_VRAM 32768, chr_title_screen, $0000
 
         jsl SE_PPU_CLEAR_PALETTE
         seta8
-        lda #15
+        lda #0
         jsl SE_PPU_SET_SCREEN_BRIGHTNESS
 
         seta16
@@ -63,16 +63,22 @@
         ldx #0
         jsl SPC_LOAD
 
+        lda #32
+        jsl SPC_ALLOCATE_SOUND_REGION
+
+        lda #^sfx_SoundTable
+        ldy #.LOWORD(sfx_SoundTable)
+        jsl SPC_SET_SOUND_TABLE
+
         jsl SPC_PROCESS
 
         ldx #0
         jsl SPC_PLAY
 
-        ldx #$00ff
+        ldx #$3f
         jsl SPC_SET_MODULE_VOLUME
 
         jsl SPC_PROCESS
-
 
         seta16
         setxy8
@@ -80,7 +86,20 @@
         ldx #0
         jsl SE_PPU_SET_PALETTE_COLOR
         
+        seta8
+        ; turn on the screen; all the changes done to vram/cgram
+        ; will be updated in nmi
+        jsl SE_PPU_ENABLE_RENDERING
 
+        lda #0
+        ldx #15
+        jsl SE_PPU_FADE_SCREEN_BRIGHTNESS
+
+
+        
+        setxy16
+        lda #sfx_endStart_02
+        jsl SPC_PLAY_SOUND
 
     @loop:
         jsl SE_WAIT_VSYNC

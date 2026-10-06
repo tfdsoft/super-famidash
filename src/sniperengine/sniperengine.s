@@ -92,6 +92,12 @@
 	jmp spcFlush
 	jmp spcProcess
 
+	jmp spcSetSoundTable
+	jmp spcAllocateSoundRegion
+	jmp spcPlaySound
+	jmp spcPlaySoundV
+	jmp spcPlaySoundEx
+
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_identity_table
@@ -1365,7 +1371,7 @@ spcSetSoundTable:
 ;======================================================================
 	sty	SoundTable
 	sta	SoundTable+2
-	rts
+	rtl
 
 ;======================================================================
 spcAllocateSoundRegion:
@@ -1373,7 +1379,7 @@ spcAllocateSoundRegion:
 ; a = size of buffer
 ;----------------------------------------------------------------------
 	pha				; flush command queue
-	jsr	spcFlush		;
+	jsl	spcFlush		;
 					;
 	lda	spc_v			; wait for spc
 :	cmp	APUIO1		;
@@ -1392,7 +1398,7 @@ spcAllocateSoundRegion:
 	sta	spc_v			;
 	sta	spc_pr+1		;
 ;----------------------------------------------------------------------
-	rts
+	rtl
 
 ;----------------------------------------------------------------------
 ; a = index of sound
@@ -1502,7 +1508,7 @@ spcPlaySoundEx:
 	sta	digi_init		;
 	sta	digi_active		; 
 ;----------------------------------------------------------------------------
-	rts
+	rtl
 	
 ;============================================================================
 spcProcessStream:

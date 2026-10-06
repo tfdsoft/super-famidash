@@ -80,7 +80,7 @@
 
         jsl SPC_PROCESS
 
-        lda #2
+        lda #1
         jsl SPC_PLAY_SOUND
 
         seta16

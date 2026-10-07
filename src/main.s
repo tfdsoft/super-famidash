@@ -63,7 +63,7 @@
         ldx #0
         jsl SPC_LOAD
 
-        lda #32
+        lda #26
         jsl SPC_ALLOCATE_SOUND_REGION
 
         lda #^sfx_SoundTable
@@ -78,7 +78,7 @@
 
         jsl SPC_PROCESS
 
-        lda #0
+        lda #1
         jsl SPC_PLAY_SOUND
 
         seta16

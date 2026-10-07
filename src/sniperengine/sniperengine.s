@@ -32,6 +32,11 @@
     se_v_vram_update:       .res 1
     se_v_palette_update:    .res 1
 
+	se_v_controller_1:		.res 2
+	se_v_controller_2:		.res 2
+	se_v_controller_3:		.res 2
+	se_v_controller_4:		.res 2
+
 .segment .string(SE_BSS_SEGMENT) ;: SE_BSS_ADDR_TYPE
 
     se_v_palette_buffer:    .res 512
@@ -265,14 +270,14 @@
     .proc se_ppu_disable_nmi
         seta8
         lda se_v_cpu_nmitimen_var
-        and #%01111111
-        bra __se_ppu_nmitimen_common
+        and #%01111110
+        bra __se_cpu_nmitimen_common
     .endproc
 
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;  SE_CPU_ENABLE_NMI
+    ;;  se_cpu_enable_nmi
     ;;  description: enables the nmi signal.
     ;;  arguments:  none
     ;;  returns:    none
@@ -281,11 +286,11 @@
     .proc SE_CPU_ENABLE_NMI
         seta8
         lda se_v_cpu_nmitimen_var
-        ora #%10000000
-        ; fall through
+        ora #%10000001
+        bra __se_cpu_nmitimen_common
     .endproc
 
-    __se_ppu_nmitimen_common:
+    __se_cpu_nmitimen_common:
         sta se_v_cpu_nmitimen_var
         sta NMITIMEN
 
@@ -576,10 +581,6 @@
 
 
 
-	__se_get_controllers:
-		
-
-
 
 
     .export nmi
@@ -628,6 +629,31 @@
                 stz se_v_palette_update
 
             @skip_palette_update:
+
+			;lda se_v_vram_update
+			;beq @skip_vram_updates
+
+
+
+			;@skip_vram_updates:
+
+			;; check if controller polling is done,
+			;; then copy to controller vars
+			seta8
+			lda #1
+			@is_controller_poll_done:
+				tsb HVBJOY ;register is read-only
+				bne @is_controller_poll_done
+
+			seta16
+			lda JOY1L
+			sta se_v_controller_1
+			lda JOY2L
+			sta se_v_controller_2
+			lda JOY3L
+			sta se_v_controller_3
+			lda JOY4L
+			sta se_v_controller_4
 
             
 

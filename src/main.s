@@ -70,8 +70,8 @@
         ldy #.LOWORD(sfx_SoundTable)
         jsl SPC_SET_SOUND_TABLE
 
-        ;ldx #0
-        ;jsl SPC_PLAY
+        ldx #0
+        jsl SPC_PLAY
 
         ldx #$3f
         jsl SPC_SET_MODULE_VOLUME
@@ -99,11 +99,13 @@
 
     @loop:
         jsl SE_WAIT_VSYNC
+        jsl SE_OAM_CLEAR
 
         seta8
         setxy16
         jsl SPC_PROCESS
 
+        jsl SE_TEST
         ;seta8
         ;setxy8
 

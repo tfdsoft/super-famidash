@@ -29,8 +29,13 @@
 
 .segment .string(SE_ZEROPAGE_SEGMENT)
     se_v_frame_count:       .res 1
+
     se_v_vram_update:       .res 1
     se_v_palette_update:    .res 1
+
+	se_v_hdma_ch_enable:    .res 1 ; bit 7 should NEVER be set
+
+    se_v_oam_sprite_count:  .res 1
 
 	se_v_controller_1:		.res 2
 	se_v_controller_2:		.res 2
@@ -41,12 +46,26 @@
 
     se_v_palette_buffer:    .res 512
 
+    se_v_oam1_buffer:       .res 512
+    se_v_oam2_buffer:       .res 32
+
     se_v_ppu_inidisp_var:   .res 1
     se_v_ppu_objsel_var:    .res 1
     se_v_ppu_bgmode_var:    .res 1
-    se_v_ppu_bgXsc_var:     .res 4
+    se_v_ppu_bg1sc_var:     .res 1
+    se_v_ppu_bg2sc_var:     .res 1
+    se_v_ppu_bg3sc_var:     .res 1
+    se_v_ppu_bg4sc_var:     .res 1
     se_v_ppu_bg12nba_var:   .res 1
     se_v_ppu_bg34nba_var:   .res 1
+	se_v_ppu_bg1hofs_var:	.res 2
+	se_v_ppu_bg1vofs_var:	.res 2
+	se_v_ppu_bg2hofs_var:	.res 2
+	se_v_ppu_bg2vofs_var:	.res 2
+	se_v_ppu_bg3hofs_var:	.res 2
+	se_v_ppu_bg3vofs_var:	.res 2
+	se_v_ppu_bg4hofs_var:	.res 2
+	se_v_ppu_bg4vofs_var:	.res 2
 
     se_v_cpu_nmitimen_var:  .res 1
 
@@ -55,30 +74,42 @@
     ; every sniperengine instance starts with a jump table lmao
 
     ;; INIT
-    jmp se_init
+    jmp se_init 						;00
 
     ;; PPU ROUTINES
-    jmp se_wait_vsync
+    jmp se_wait_vsync					;03
 
-    jmp se_ppu_disable_nmi
-    jmp SE_CPU_ENABLE_NMI
+	;; cpu nmi flag
+    jmp se_cpu_disable_nmi				;06
+    jmp se_cpu_enable_nmi				;09
 
-    jmp se_ppu_disable_rendering
-    jmp se_ppu_enable_rendering
+	;; ppu whatnots
+    jmp se_ppu_disable_rendering		;0c
+    jmp se_ppu_enable_rendering			;0f
+    jmp se_ppu_set_screen_brightness	;12
+    jmp se_ppu_fade_screen_brightness	;15
+    jmp se_ppu_set_palette_color		;18
+    jmp se_ppu_set_palette_set			;1b
+    jmp se_ppu_clear_palette			;1e
 
-    jmp se_ppu_set_screen_brightness
-    jmp se_ppu_fade_screen_brightness
+	jmp se_ppu_enable_layer_main		;21
+	jmp se_ppu_enable_layer_sub			;24
 
-    jmp se_ppu_set_palette_color
-    jmp se_ppu_set_palette_set
-    jmp se_ppu_clear_palette
+	;; FOR FUTURE PPU FUNCTIONS (there will be more)
+	jmp _UNUSED							;27
+	jmp _UNUSED							;2a
+	jmp _UNUSED							;2d
+
+	;; oam stuff
+	jmp se_oam_clear					;30
+	jmp se_oam_draw_sprite				;33
+	jmp _UNUSED
 
 
 
+    .align 128  ; SNESMOD STUFF			
 
-    .align 128  ; SNESMOD STUFF
-
-    jmp spcBoot
+    jmp spcBoot							;80
 	
 	jmp spcSetBank
 	jmp spcLoad
@@ -155,6 +186,16 @@
         .byte $4f,$52,$55,$58,$5a,$5d,$61,$64,$67,$6a,$6d,$70,$73,$76,$79,$7c
 
     .align 256
+
+
+
+	;; TEST FUNCTIONS
+	;; DO NOT CALL
+	jmp se_test
+	jmp se_test_2
+
+
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_init
     ;;  description: initializes cpu regs, ppu regs,
@@ -170,60 +211,60 @@
         lda #$4200
         tcd ; move direct page to S-CPU I/O area
         lda #$FF00
-        sta NMITIMEN    ; and WRIO
-        stz NMITIMEN    ; and WRIO
-        stz WRMPYA  ; and WRMPYB
-        stz WRDIVL  ; and WRDIVH
-        stz WRDIVB  ; and HTIMEL
-        stz HTIMEH  ; and VTIMEL
-        stz VTIMEH  ; and MDMAEN
-        sta HDMAEN  ; and MEMSEL. enables FastROM
+        sta .lobyte(NMITIMEN)    ; and WRIO
+        stz .lobyte(NMITIMEN)    ; and WRIO
+        stz .lobyte(WRMPYA)  ; and WRMPYB
+        stz .lobyte(WRDIVL)  ; and WRDIVH
+        stz .lobyte(WRDIVB)  ; and HTIMEL
+        stz .lobyte(HTIMEH)  ; and VTIMEL
+        stz .lobyte(VTIMEH)  ; and MDMAEN
+        sta .lobyte(HDMAEN)  ; and MEMSEL. enables FastROM
 
         ;; INIT PPU REGISTERS ;;
         lda #$2100
         tcd ; move direct page to PPU I/O area
         lda #$0080
-        sta INIDISP ; and OBJSEL. turns on forced blank
-        stz OAMADDL ; and OAMADDH
-        stz BGMODE  ; and MOSAIC
-        stz BG1SC   ; and BG2SC
-        stz BG3SC   ; and BG4SC
-        stz BG12NBA ; and BG34NBA
-        stz VMADDL  ; and VMADDH
-        stz W34SEL  ; and WOBJSEL
-        stz WH0     ; and WH1
-        stz WH2     ; and WH3
-        stz WBGLOG  ; and WOBJLOG
-        stz TM      ; and TS
-        stz TMW     ; and TSW
+        sta .lobyte(INIDISP) ; and OBJSEL. turns on forced blank
+        stz .lobyte(OAMADDL) ; and OAMADDH
+        stz .lobyte(BGMODE)  ; and MOSAIC
+        stz .lobyte(BG1SC)   ; and BG2SC
+        stz .lobyte(BG3SC)   ; and BG4SC
+        stz .lobyte(BG12NBA) ; and BG34NBA
+        stz .lobyte(VMADDL)  ; and VMADDH
+        stz .lobyte(W34SEL)  ; and WOBJSEL
+        stz .lobyte(WH0)     ; and WH1
+        stz .lobyte(WH2)     ; and WH3
+        stz .lobyte(WBGLOG)  ; and WOBJLOG
+        stz .lobyte(TM)      ; and TS
+        stz .lobyte(TMW)     ; and TSW
         ; these registers need 8-bit writes
         seta8
-        sta VMAIN
-        stz M7SEL
-        stz CGADD
-        stz W12SEL ; window
+        sta .lobyte(VMAIN)
+        stz .lobyte(M7SEL)
+        stz .lobyte(CGADD)
+        stz .lobyte(W12SEL) ; window
         ; scroll registers need double 8-bit writes
         .repeat 8, I
-            stz BG1HOFS+I
-            stz BG1HOFS+I
+            stz .lobyte(BG1HOFS)+I
+            stz .lobyte(BG1HOFS)+I
         .endrepeat
         ; as do the mode 7 registers, which should be
         ; set to the indentity matrix:
         ; [ $0100   $0000 ]
 	    ; [ $0000   $0100 ]
         lda #$01
-        stz M7A
-        sta M7A
-        stz M7B
-        stz M7B
-        stz M7C
-        stz M7C
-        stz M7D
-        sta M7D
-        stz M7X
-        stz M7X
-        stz M7Y
-        stz M7Y
+        stz .lobyte(M7A)
+        sta .lobyte(M7A)
+        stz .lobyte(M7B)
+        stz .lobyte(M7B)
+        stz .lobyte(M7C)
+        stz .lobyte(M7C)
+        stz .lobyte(M7D)
+        sta .lobyte(M7D)
+        stz .lobyte(M7X)
+        stz .lobyte(M7X)
+        stz .lobyte(M7Y)
+        stz .lobyte(M7Y)
 
         ; reset direct page back to zeropage
         setaxy16
@@ -235,6 +276,7 @@
         rtl
     .endproc
     
+
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -260,20 +302,20 @@
     
 
 
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;  se_ppu_disable_nmi
+    ;;  se_cpu_disable_nmi
     ;;  description: disables the nmi signal.
     ;;  arguments:  none
     ;;  returns:    none
     ;;  clobbers:   A,P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    .proc se_ppu_disable_nmi
+    .proc se_cpu_disable_nmi
         seta8
         lda se_v_cpu_nmitimen_var
         and #%01111110
         bra __se_cpu_nmitimen_common
     .endproc
-
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -283,7 +325,7 @@
     ;;  returns:    none
     ;;  clobbers:   A,P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    .proc SE_CPU_ENABLE_NMI
+    .proc se_cpu_enable_nmi
         seta8
         lda se_v_cpu_nmitimen_var
         ora #%10000001
@@ -295,6 +337,7 @@
         sta NMITIMEN
 
         rtl
+
 
 
 
@@ -311,7 +354,6 @@
         trb se_v_ppu_inidisp_var
         rtl
     .endproc
-
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -332,7 +374,6 @@
         sta se_v_ppu_inidisp_var
 
         rtl
-
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -356,7 +397,6 @@
 
         rtl
     .endproc
-
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -417,7 +457,6 @@
     .endproc
 
 
-
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_set_palette_color
     ;;  description: set one palette index to an rgb color
@@ -445,7 +484,6 @@
         plp
         rtl
     .endproc
-
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -533,13 +571,12 @@
     .endproc
 
 
-
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_clear_palette
     ;;  description: set whole palette to black
     ;;  arguments:  none
     ;;  returns:    none
-    ;;  clobbers:   
+    ;;  clobbers:   A, X, P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_clear_palette
         ; set up dma channel 7 for transfer
@@ -571,12 +608,161 @@
 
 
 
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_enable_layer_main
+    ;;  description: enable background layers
+    ;;  arguments:  A8 (layers to enable)
+    ;;  returns:    none
+    ;;  clobbers:   none
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_ppu_enable_layer_main
+		sta se_v_ppu_tm_var
+		rtl
+	.endproc
 
 
 
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_oam_clear
+    ;;  description: clear oam lmao
+    ;;  arguments:  none
+    ;;  returns:    none
+    ;;  clobbers:   A, X, P
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_oam_clear
+		; i guess i never needed any of this lol
+
+		;seta16
+        ;setxy8
+		;lda #.loword(se_v_oam1_buffer)
+		;ldx #^se_v_oam1_buffer
+		;sta WMADDL
+		;stx WMADDH
+
+        ;ldx #DMA_LINEAR|DMA_CONST
+        ;stx DMAMODE+$70
+        ;ldx #.lobyte(WMDATA)
+        ;stx DMAPPUREG+$70
+        ;lda #.loword(se_identity_table)
+        ;ldx #^se_identity_table
+        ;sta DMAADDR+$70
+        ;stx DMAADDRBANK+$70
+		;lda #544
+        ;sta DMALEN+$70  ; 0 length = $10000
+
+		;ldx #%10000000
+		;stx COPYSTART
+
+		seta8
+		stz se_v_oam_sprite_count
+
+		rtl
+	.endproc
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_oam_draw_sprite
+    ;;  description: clear oam lmao
+    ;;  arguments: 	a16 (X position)
+	;;				x8 (Y position)
+	;;				__rc2 (Tile.0-7)
+	;;				__rc3 (Tile.8 + Attributes)
+	;;				C (Size)
+    ;;  returns:    none
+    ;;  clobbers:   Y, P, __rc4
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_oam_draw_sprite
+		; save carry for later
+		php
+
+		; multiply current sprite count by 4
+		pha
+		seta8
+		stz __rc4 ; clear __rc4 for the eventual oam2 write
+		lda se_v_oam_sprite_count
+		asl
+		asl
+		tay
+		seta16
+		; while A is 16 bit and saved, write attributes
+		lda __rc2 ; and __rc3
+		sta se_v_oam1_buffer+2, y ; Tile + Attributes
+
+		pla ; restore A (Xpos) and write it
+		sta se_v_oam1_buffer+0, y ; X position, low byte
+		seta8
+		txa
+		sta se_v_oam1_buffer+1, y ; Y position
+
+		plp ; A is now 8 bits wide + carry restored
+		bcc :+ ; if carry set,
+			rol __rc4 ; save carry as sprite size
+			asl __rc4
+		:
+		xba
+		and #%00000001
+		ora __rc4
+		stz __rc4
+
+		; get index again, but divide by 4 this time
+		tax
+		lda se_v_oam_sprite_count
+		lsr
+		ror __rc4
+		lsr
+		ror __rc4
+		tay
+		txa
+
+		; ok now figure out how the hell we're gonna 
+		; add it to the high byte
+		beq @offset_is_zero
+		ldx __rc4
+		cpx #$40
+		beq @offset_is_one
+		cpx #$80
+		beq @offset_is_two
+		; if its three, don't bother checking
+		asl
+		asl
+		@offset_is_two:
+		asl
+		asl
+		@offset_is_one:
+		asl
+		asl
+
+		ora se_v_oam2_buffer, y
+
+		@offset_is_zero:
+		sta se_v_oam2_buffer, y
+
+		inc se_v_oam_sprite_count
+		rtl
+	.endproc
 
 
 
+	.proc se_test
+		php
+		seta8
+		lda se_v_oam_sprite_count
+		bmi :+
+			inc se_v_oam_sprite_count
+			bra :++
+		:
+			stz se_v_oam_sprite_count
+		:
+		plp
+		rtl
+	.endproc
+	
+	.proc se_test_2
+		php
+
+		plp
+		rtl
+	.endproc
 
 
 
@@ -601,21 +787,25 @@
 
         ; is rendering enabled on the engine side?
         lda se_v_ppu_inidisp_var
-        bmi @skip_all_updates   ; if not, skip everything
+        bpl :+
+			jmp @skip_all_updates   ; if not, skip everything
+		:
 
-            ;; START OF VRAM UPDATES
+			ldy #%10000000
+
+            ;; START OF PALETTE UPDATES
             lda se_v_palette_update
-            beq @skip_palette_update
+            ;beq @skip_palette_update
 
                 ;; ok so we need to DMA the updated
                 ;; palette using channel 7
                 stz CGADD
                 seta16
                 setxy8
-                ldx #DMA_00|DMA_FORWARD
-                stx DMAMODE+$70
-                ldx #.lobyte(CGDATA)
-                stx DMAPPUREG+$70
+                lda #DMAMODE_CGDATA
+                sta DMAMODE+$70
+                ;ldx #.lobyte(CGDATA)
+                ;stx DMAPPUREG+$70
                 lda #.loword(se_v_palette_buffer)
                 sta DMAADDR+$70
                 ldx #^se_v_palette_buffer
@@ -623,13 +813,59 @@
                 lda #512
                 sta DMALEN+$70
 
-                ldx #%10000000
-                stx COPYSTART
+                sty COPYSTART
 
+				seta8
                 stz se_v_palette_update
 
             @skip_palette_update:
 
+
+			;; START OF OAM UPLOAD
+            lda se_v_oam_sprite_count
+            beq @skip_oam_upload
+				seta16
+				stz OAMADDL ; and OAMADDH
+                lda #DMAMODE_OAMDATA
+				sta DMAMODE+$70
+				lda #.loword(se_v_oam1_buffer)
+				ldx #^se_v_oam1_buffer
+				sta DMAADDR+$70
+				stx DMAADDRBANK+$70
+				seta8
+				lda #0
+				xba
+				lda se_v_oam_sprite_count
+				seta16
+				asl
+				asl
+				sta DMALEN+$70
+
+				sty COPYSTART
+
+				lda #$100
+				sta OAMADDL ; and OAMADDH
+				lda #.loword(se_v_oam2_buffer)
+				; don't need to rewrite bank byte
+				sta DMAADDR+$70
+				seta8
+				lda #0
+				xba
+				lda se_v_oam_sprite_count
+				dec
+				seta16
+				lsr
+				lsr
+				inc
+				sta DMALEN+$70
+
+				sty COPYSTART
+
+            @skip_oam_upload:
+
+
+			;; START OF VRAM UPDATES
+			;seta8
 			;lda se_v_vram_update
 			;beq @skip_vram_updates
 
@@ -679,6 +915,13 @@
         rti
     .endproc
 
+
+
+
+	.proc _UNUSED
+		cop #0
+		rtl
+	.endproc
 
 
 

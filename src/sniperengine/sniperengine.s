@@ -899,7 +899,7 @@
 				cmp se_v_oam_count_prev
 				; carry clear if count is less than previous frame
 
-				bcs @skip_oam_upload
+				bcs @skip_oam_fix
 					; to all the newly unused sprites,
 					; write $e0 to each=
 					lda #0

@@ -35,7 +35,8 @@
 
 	se_v_hdma_ch_enable:    .res 1 ; bit 7 should NEVER be set
 
-    se_v_oam_sprite_count:  .res 1
+    se_v_oam_count:  		.res 1
+	se_v_oam_count_prev:	.res 1
 
 	se_v_controller_1:		.res 2
 	se_v_controller_2:		.res 2
@@ -66,6 +67,9 @@
 	se_v_ppu_bg3vofs_var:	.res 2
 	se_v_ppu_bg4hofs_var:	.res 2
 	se_v_ppu_bg4vofs_var:	.res 2
+
+	se_v_ppu_tm_var:		.res 1
+	se_v_ppu_ts_var:		.res 1
 
     se_v_cpu_nmitimen_var:  .res 1
 
@@ -610,7 +614,7 @@
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_enable_layer_main
-    ;;  description: enable background layers
+    ;;  description: enable background layers on main screen
     ;;  arguments:  A8 (layers to enable)
     ;;  returns:    none
     ;;  clobbers:   none
@@ -619,6 +623,20 @@
 		sta se_v_ppu_tm_var
 		rtl
 	.endproc
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_enable_layer_sub
+    ;;  description: enable background layers on sub screen
+    ;;  arguments:  A8 (layers to enable)
+    ;;  returns:    none
+    ;;  clobbers:   none
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_ppu_enable_layer_sub
+		sta se_v_ppu_ts_var
+		rtl
+	.endproc
+
 
 
 
@@ -630,31 +648,31 @@
     ;;  clobbers:   A, X, P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_oam_clear
-		; i guess i never needed any of this lol
+		;turns out i DO need all of this
+		seta16
+        setxy8
+		lda #.loword(se_v_oam1_buffer)
+		ldx #^se_v_oam1_buffer
+		sta WMADDL
+		stx WMADDH
 
-		;seta16
-        ;setxy8
-		;lda #.loword(se_v_oam1_buffer)
-		;ldx #^se_v_oam1_buffer
-		;sta WMADDL
-		;stx WMADDH
+        ldx #DMA_LINEAR|DMA_CONST
+        stx DMAMODE+$70
+        ldx #.lobyte(WMDATA)
+        stx DMAPPUREG+$70
+        lda #.loword(se_identity_table)+$e0
+        ldx #^se_identity_table
+        sta DMAADDR+$70
+        stx DMAADDRBANK+$70
+		lda #544
+        sta DMALEN+$70  ; 0 length = $10000
 
-        ;ldx #DMA_LINEAR|DMA_CONST
-        ;stx DMAMODE+$70
-        ;ldx #.lobyte(WMDATA)
-        ;stx DMAPPUREG+$70
-        ;lda #.loword(se_identity_table)
-        ;ldx #^se_identity_table
-        ;sta DMAADDR+$70
-        ;stx DMAADDRBANK+$70
-		;lda #544
-        ;sta DMALEN+$70  ; 0 length = $10000
-
-		;ldx #%10000000
-		;stx COPYSTART
+		ldx #%10000000
+		stx COPYSTART
 
 		seta8
-		stz se_v_oam_sprite_count
+
+		stz se_v_oam_count
 
 		rtl
 	.endproc
@@ -679,7 +697,7 @@
 		pha
 		seta8
 		stz __rc4 ; clear __rc4 for the eventual oam2 write
-		lda se_v_oam_sprite_count
+		lda se_v_oam_count
 		asl
 		asl
 		tay
@@ -706,7 +724,7 @@
 
 		; get index again, but divide by 4 this time
 		tax
-		lda se_v_oam_sprite_count
+		lda se_v_oam_count
 		lsr
 		ror __rc4
 		lsr
@@ -737,7 +755,7 @@
 		@offset_is_zero:
 		sta se_v_oam2_buffer, y
 
-		inc se_v_oam_sprite_count
+		inc se_v_oam_count
 		rtl
 	.endproc
 
@@ -746,12 +764,12 @@
 	.proc se_test
 		php
 		seta8
-		lda se_v_oam_sprite_count
+		lda se_v_oam_count
 		bmi :+
-			inc se_v_oam_sprite_count
+			inc se_v_oam_count
 			bra :++
 		:
-			stz se_v_oam_sprite_count
+			stz se_v_oam_count
 		:
 		plp
 		rtl
@@ -759,7 +777,9 @@
 	
 	.proc se_test_2
 		php
-
+		seta8
+		lda #127
+		sta se_v_oam_count_prev
 		plp
 		rtl
 	.endproc
@@ -795,7 +815,7 @@
 
             ;; START OF PALETTE UPDATES
             lda se_v_palette_update
-            ;beq @skip_palette_update
+            beq @skip_palette_update
 
                 ;; ok so we need to DMA the updated
                 ;; palette using channel 7
@@ -822,45 +842,99 @@
 
 
 			;; START OF OAM UPLOAD
-            lda se_v_oam_sprite_count
+            lda se_v_oam_count
             beq @skip_oam_upload
+
+				; alright here's the game plan:
+				; if sprite count for this frame is
+				; the same or more than last frame,
+				; upload as normal
+				; if sprite count for this frame is
+				; less than last frame, write $e0
+				; to the sprites that are no longer
+				; visible, then upload the previous
+				; frame's sprite count
+
+				; oam count is already in A
 				seta16
+				tax
+				txa
+				asl
+				asl
+				sta DMALEN+$70
+
 				stz OAMADDL ; and OAMADDH
-                lda #DMAMODE_OAMDATA
+				lda #DMAMODE_OAMDATA
 				sta DMAMODE+$70
 				lda #.loword(se_v_oam1_buffer)
 				ldx #^se_v_oam1_buffer
 				sta DMAADDR+$70
 				stx DMAADDRBANK+$70
-				seta8
-				lda #0
-				xba
-				lda se_v_oam_sprite_count
-				seta16
-				asl
-				asl
-				sta DMALEN+$70
-
+				
 				sty COPYSTART
+
+
+				
+				ldx se_v_oam_count
+				txa
+				dec
+				lsr
+				lsr
+				inc
+				sta DMALEN+$70
 
 				lda #$100
 				sta OAMADDL ; and OAMADDH
 				lda #.loword(se_v_oam2_buffer)
 				; don't need to rewrite bank byte
 				sta DMAADDR+$70
-				seta8
-				lda #0
-				xba
-				lda se_v_oam_sprite_count
-				dec
-				seta16
-				lsr
-				lsr
-				inc
-				sta DMALEN+$70
-
+				
 				sty COPYSTART
 
+
+				; do the check here for if new oam
+				; is smaller than old oam
+				seta8
+				lda se_v_oam_count
+				cmp se_v_oam_count_prev
+				; carry clear if count is less than previous frame
+
+				bcs @skip_oam_upload
+					; to all the newly unused sprites,
+					; write $e0 to each=
+					lda #0
+					xba
+					lda se_v_oam_count_prev
+					sec
+					sbc se_v_oam_count
+					seta16
+					asl
+					asl
+					sta DMALEN+$70
+
+					ldx #DMA_00|DMA_CONST
+					stx DMAMODE+$70
+
+					seta8
+					lda #0
+					xba
+					lda se_v_oam_count
+					inc
+					seta16
+					asl
+					sta OAMADDL
+					lda #.loword(se_identity_table+$e0)
+					sta DMAADDR+$70
+					ldx #^se_identity_table
+					stx DMAADDRBANK+$70
+
+					sty COPYSTART
+
+				@skip_oam_fix:
+				seta8
+				lda se_v_oam_count
+				sta se_v_oam_count_prev
+				
             @skip_oam_upload:
 
 

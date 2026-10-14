@@ -99,7 +99,7 @@
 
     @loop:
         jsl SE_WAIT_VSYNC
-        jsl SE_OAM_CLEAR
+        ;jsl SE_OAM_CLEAR
 
         seta8
         setxy16

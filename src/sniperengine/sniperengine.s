@@ -3,7 +3,6 @@
 ;;
 .define SE_ZEROPAGE_SEGMENT ZEROPAGE
 .define SE_BSS_SEGMENT      BSS
-.define SE_BSS_ADDR_TYPE    
 .define SE_ENGINE_SEGMENT   SNIPERENGINE
 
 
@@ -42,6 +41,7 @@
 	se_v_controller_2:		.res 2
 	se_v_controller_3:		.res 2
 	se_v_controller_4:		.res 2
+
 
 .segment .string(SE_BSS_SEGMENT) ;: SE_BSS_ADDR_TYPE
 
@@ -939,13 +939,12 @@
 
 
 			;; START OF VRAM UPDATES
-			;seta8
-			;lda se_v_vram_update
-			;beq @skip_vram_updates
+			lda se_v_vram_update
+			beq @skip_vram_updates
 
 
 
-			;@skip_vram_updates:
+			@skip_vram_updates:
 
 			;; check if controller polling is done,
 			;; then copy to controller vars

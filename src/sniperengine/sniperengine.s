@@ -759,6 +759,110 @@
 		rtl
 	.endproc
 
+	;; TODO: metasprite function
+
+
+	;;
+	;; 	VRAM BUFFER SHENANIGANS
+	;; 	ok here's how the format works
+	;;
+	;; 	first byte is the VMAIN register write,
+	;;	plus arguments in the unused bits
+	;; 	7  bit  0
+	;;	---- ----
+	;;	Msia RRII
+	;;  |||| ||||
+	;;	|||| ||++- Address increment amount:
+	;;	|||| ||		0: Increment by 1 word
+	;;	|||| ||		1: Increment by 32 words
+	;;	|||| ||		2: Increment by 128 words
+	;;	|||| ++--- Address remapping: (VMADD -> Internal)
+	;;	||||		0: None
+	;;	||||		1: Remap rrrrrrrr YYYccccc -> rrrrrrrr cccccYYY (2bpp)
+	;;	||||		2: Remap rrrrrrrY YYcccccP -> rrrrrrrc ccccPYYY (4bpp)
+	;;	||||		3: Remap rrrrrrYY YcccccPP -> rrrrrrcc cccPPYYY (8bpp)
+	;;	|||+------ Data amount:
+	;;	|||			0: single entry
+	;;	|||			1: multiple entries
+	;;  ||+------- Indirect (multiple entries only)
+	;;  |+-------- Data size:
+	;;	|			0: byte
+	;;	|			1: word
+	;;	+--------- Address increment mode:
+	;;				0: Inc after $2118/$2139
+	;;				1: Inc after $2119/$213A
+	;;
+	;;
+	;;	second and third bytes are the 15-bit vram address to
+	;;	start at
+	;;	F  bit  8  7  bit  0
+	;;	hHHH HHHH  LLLL LLLL
+	;;	|||| ||||  |||| ||||
+	;;	++++-++++--++++-++++- VRAM word address
+	;;	
+	;;
+	;;	fourth byte (and onward) varies, depending on what was
+	;;	set in the VMAIN byte at the start.
+	;;		if VMAIN.4 = 0, this is the single byte/word to be 
+	;;			written. indirect bit is ignored.
+	;;		if VMAIN.4 = 1, byte 4 is the length of the transfer.
+	;;			if VMAIN.5 = 0, the transfer data is inline, and
+	;;				is pulled from the end of the transfer header.
+	;;			if VMAIN.5 = 1, bytes 5/6/7 are the 24-bit
+	;;				address to pull the transfer data from.
+	;;		
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_one_vram_buffer_lo
+    ;;  description: add a one-byte tile to the vram buffer
+    ;;  arguments: 	a8 (tile)
+	;;				x16 (vram address)
+    ;;  returns:    none
+    ;;  clobbers:   Y, P
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_one_vram_buffer_lo
+		ldy se_v_vram_buffer_index
+		
+		sta se_v_vram_buffer+2, y
+		seta16
+		txa
+		and #$7fff ; high bit indicates multiple
+		sta se_v_vram_buffer+0, y
+		iny
+		iny
+		iny
+
+		sty se_v_vram_buffer_index
+		rtl
+	.endproc
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_one_vram_buffer
+    ;;  description: add a two-byte tile to the vram buffer
+    ;;  arguments: 	a16 (tile)
+	;;				x16 (vram address)
+    ;;  returns:    none
+    ;;  clobbers:   Y, P
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_one_vram_buffer
+		ldy se_v_vram_buffer_index
+		
+		sta se_v_vram_buffer+2, y
+		txa
+		and #$7fff ; high bit indicates multiple
+		sta se_v_vram_buffer+0, y
+		iny
+		iny
+		iny
+		iny
+
+		sty se_v_vram_buffer_index
+		rtl
+	.endproc
+
+
 
 
 	.proc se_test

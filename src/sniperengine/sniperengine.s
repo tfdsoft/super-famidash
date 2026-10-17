@@ -37,6 +37,8 @@
     se_v_oam_count:  		.res 1
 	se_v_oam_count_prev:	.res 1
 
+	se_v_vram_buffer_index: .res 1
+
 	se_v_controller_1:		.res 2
 	se_v_controller_2:		.res 2
 	se_v_controller_3:		.res 2
@@ -46,6 +48,8 @@
 .segment .string(SE_BSS_SEGMENT) ;: SE_BSS_ADDR_TYPE
 
     se_v_palette_buffer:    .res 512
+
+	se_v_vram_buffer:		.res 128
 
     se_v_oam1_buffer:       .res 512
     se_v_oam2_buffer:       .res 32
@@ -500,7 +504,7 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_set_palette_set
         .a8
-        setaxy8
+        setxy8
         tax ; save set index in X for later
 
         lda #$7e
@@ -690,6 +694,8 @@
     ;;  clobbers:   Y, P, __rc4
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_oam_draw_sprite
+		.a16
+		.i8
 		; save carry for later
 		php
 
@@ -814,51 +820,82 @@
 
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;  se_one_vram_buffer_lo
+    ;;  se_one_vram_buffer_byte
     ;;  description: add a one-byte tile to the vram buffer
     ;;  arguments: 	a8 (tile)
 	;;				x16 (vram address)
     ;;  returns:    none
     ;;  clobbers:   Y, P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	.proc se_one_vram_buffer_lo
+	.proc se_one_vram_buffer_byte
+		.a8
+		.i16
 		ldy se_v_vram_buffer_index
 		
-		sta se_v_vram_buffer+2, y
+		; fourth byte, the tile itself
+		sta se_v_vram_buffer + $03, y
+		
+		; first byte, the VMAIN write
+		lda #%10000000	; inc on hi byte
+						; byte-sized
+						; single entry
+						; no addr remap
+						; inc by 1spcPlaySound
+		sta se_v_vram_buffer + $00, y
+
+		; second and third bytes, vram address
 		seta16
 		txa
-		and #$7fff ; high bit indicates multiple
-		sta se_v_vram_buffer+0, y
-		iny
-		iny
-		iny
+		sta se_v_vram_buffer + $01, y
 
-		sty se_v_vram_buffer_index
+		; increment offset
+		seta8
+		tya
+		clc
+		adc #4
+		sta se_v_vram_buffer_index
+
 		rtl
 	.endproc
 
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;  se_one_vram_buffer
+    ;;  se_one_vram_buffer_word
     ;;  description: add a two-byte tile to the vram buffer
     ;;  arguments: 	a16 (tile)
 	;;				x16 (vram address)
     ;;  returns:    none
     ;;  clobbers:   Y, P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	.proc se_one_vram_buffer
+	.proc se_one_vram_buffer_word
+		.a16
+		.i16
 		ldy se_v_vram_buffer_index
 		
-		sta se_v_vram_buffer+2, y
-		txa
-		and #$7fff ; high bit indicates multiple
-		sta se_v_vram_buffer+0, y
-		iny
-		iny
-		iny
-		iny
+		; fourth byte, the tile itself
+		sta se_v_vram_buffer + $03, y
+		
+		; first byte, the VMAIN write
+		seta8
+		lda #%11000000	; inc on hi byte
+						; word-sized
+						; single entry
+						; no addr remap
+						; inc by 1spcPlaySound
+		sta se_v_vram_buffer + $00, y
 
-		sty se_v_vram_buffer_index
+		; second and third bytes, vram address
+		seta16
+		txa
+		sta se_v_vram_buffer + $01, y
+
+		; increment offset
+		seta8
+		tya
+		clc
+		adc #5
+		sta se_v_vram_buffer_index
+
 		rtl
 	.endproc
 

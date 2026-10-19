@@ -2,15 +2,15 @@ SE_BASE_ADDRESS = $809000
 
 
 
-SE_INIT =                   0
+SE_INIT =                   	0
 
-SE_WAIT_VSYNC =             1
+SE_WAIT_VSYNC =             	1
 
-SE_CPU_DISABLE_NMI =        2
-SE_CPU_ENABLE_NMI =         3
+SE_CPU_DISABLE_NMI =        	2
+SE_CPU_ENABLE_NMI =         	3
 
-SE_PPU_DISABLE_RENDERING =  4
-SE_PPU_ENABLE_RENDERING =   5
+SE_PPU_DISABLE_RENDERING =  	4
+SE_PPU_ENABLE_RENDERING =   	5
 
 SE_PPU_SET_SCREEN_BRIGHTNESS =  6
 SE_PPU_FADE_SCREEN_BRIGHTNESS = 7 ; NO MEMES OR I KILL YOU. -usersniper
@@ -28,8 +28,8 @@ SE_PPU_DISABLE_LAYER_SUB =		14
 ;; (fututre ppu functions will go here)
 ;
 
-SE_OAM_CLEAR = 				SE_BASE_ADDRESS + $30
-SE_OAM_DRAW_SPRITE = 		SE_BASE_ADDRESS + $33
+SE_OAM_CLEAR = 					16
+SE_OAM_DRAW_SPRITE = 			17
 
 
 
@@ -70,24 +70,27 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 
 ; this is the shittest macro in the history of history
 .macro ENGINECALL n, arg1, arg2, arg3, arg4, arg5
+
+	.if n >= 15
+		.error "invalid engine call!"
+	.endif
+
+
 	.if n = SE_PPU_SET_SCREEN_BRIGHTNESS
 		seta8
 		lda arg1
 	.endif
-
 	.if n = SE_PPU_FADE_SCREEN_BRIGHTNESS
 		setaxy8
 		lda arg1
 		ldx arg2
 	.endif
-
 	.if n = SE_PPU_SET_PALETTE_COLOR
 		seta16
 		setxy8
 		lda arg1
 		ldx arg2
 	.endif
-
 	.if n = SE_PPU_SET_PALETTE_SET
 		seta16
         lda arg1
@@ -96,6 +99,37 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
         lda arg2
         sta __rc4
         lda arg3
+	.endif
+	.if n = SE_PPU_ENABLE_LAYER_MAIN
+		seta8
+		lda arg1
+	.endif
+	.if n = SE_PPU_ENABLE_LAYER_SUB
+		seta8
+		lda arg1
+	.endif
+	.if n = SE_PPU_DISABLE_LAYER_MAIN
+		seta8
+		lda arg1
+	.endif
+	.if n = SE_PPU_DISABLE_LAYER_SUB
+		seta8
+		lda arg1
+	.endif
+	.if n = SE_OAM_DRAW_SPRITE
+		seta16
+		setxy8
+		ldx arg3
+		stx __rc2
+		ldx arg4
+		stx __rc3
+		ldx arg2
+		lda arg1
+		.if arg5 == 0
+			clc
+		.else
+			sec
+		.endif
 	.endif
 
 	jsl SE_BASE_ADDRESS + (n*3)

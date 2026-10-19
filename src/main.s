@@ -28,34 +28,20 @@
     main:
         DMA_VRAM 32768, chr_title_screen, $0000
 
-        jsl SE_PPU_CLEAR_PALETTE
-        seta8
-        lda #0
-        jsl SE_PPU_SET_SCREEN_BRIGHTNESS
+        ENGINECALL SE_PPU_CLEAR_PALETTE
+        ENGINECALL SE_PPU_SET_SCREEN_BRIGHTNESS, #0
 
-        seta16
-        lda #.loword(d_super_cool_palette)
-        sta __rc2
-        seta8
-        lda #^d_super_cool_palette
-        sta __rc4
-        lda #0
-        jsl SE_PPU_SET_PALETTE_SET
+        ENGINECALL SE_PPU_SET_PALETTE_SET, #.loword(d_super_cool_palette), #^d_super_cool_palette, #0
 
-
-        seta16
-        setxy8
-        lda #RGB(31,0,0)
-        ldx #0
-        jsl SE_PPU_SET_PALETTE_COLOR
+        ENGINECALL SE_PPU_SET_PALETTE_COLOR, #RGB(31,0,0), #0
 
 
         ; load music lmao
         seta8
         setxy16
-        jsl SE_PPU_DISABLE_NMI
+        ENGINECALL SE_CPU_DISABLE_NMI
         jsl SPC_BOOT
-        jsl SE_CPU_ENABLE_NMI
+        ENGINECALL SE_CPU_ENABLE_NMI
 
         lda #^song_menu_theme
         jsl SPC_SET_BANK
@@ -81,24 +67,17 @@
         lda #1
         jsl SPC_PLAY_SOUND
 
-        seta16
-        setxy8
-        lda d_super_cool_palette
-        ldx #0
-        jsl SE_PPU_SET_PALETTE_COLOR
+        ENGINECALL SE_PPU_SET_PALETTE_COLOR, d_super_cool_palette, #0
         
-        seta8
         ; turn on the screen; all the changes done to vram/cgram
         ; will be updated in nmi
-        jsl SE_PPU_ENABLE_RENDERING
+        ENGINECALL SE_PPU_ENABLE_RENDERING
 
-        lda #0
-        ldx #15
-        jsl SE_PPU_FADE_SCREEN_BRIGHTNESS
+        ENGINECALL SE_PPU_FADE_SCREEN_BRIGHTNESS, #0, #15
 
 
     @loop:
-        jsl SE_WAIT_VSYNC
+        ENGINECALL SE_WAIT_VSYNC
         ;jsl SE_OAM_CLEAR
 
         seta8

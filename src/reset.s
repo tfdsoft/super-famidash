@@ -15,6 +15,7 @@
         txs
 
     ; enable fastrom
+        seta8
         lda #1
         sta ROMSPEED
 
@@ -24,7 +25,7 @@
         plb
 
     ; init everything
-        jsl SE_INIT
+        ENGINECALL SE_INIT
 
     ; clear RAM
         seta16
@@ -47,7 +48,7 @@
     ;;  TODO: add more clear routines here
     ;
 
-        jsl SE_CPU_ENABLE_NMI
+        ENGINECALL SE_CPU_ENABLE_NMI
     ; go to wherever main is
         setaxy8
         jsl main ; jsl to save the program bank

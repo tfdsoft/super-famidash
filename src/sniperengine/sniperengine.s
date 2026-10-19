@@ -102,10 +102,10 @@
 
 	jmp se_ppu_enable_layer_main		;21
 	jmp se_ppu_enable_layer_sub			;24
+	jmp se_ppu_disable_layer_main		;27
+	jmp se_ppu_disable_layer_sub		;2a
 
 	;; FOR FUTURE PPU FUNCTIONS (there will be more)
-	jmp _UNUSED							;27
-	jmp _UNUSED							;2a
 	jmp _UNUSED							;2d
 
 	;; oam stuff
@@ -624,6 +624,7 @@
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_ppu_enable_layer_main
+		ora se_v_ppu_tm_var
 		sta se_v_ppu_tm_var
 		rtl
 	.endproc
@@ -637,6 +638,37 @@
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_ppu_enable_layer_sub
+		ora se_v_ppu_ts_var
+		sta se_v_ppu_ts_var
+		rtl
+	.endproc
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_disable_layer_main
+    ;;  description: disable background layers on main screen
+    ;;  arguments:  A8 (layers to disable)
+    ;;  returns:    none
+    ;;  clobbers:   none
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_ppu_disable_layer_main
+		eor #$ff
+		and se_v_ppu_tm_var
+		sta se_v_ppu_tm_var
+		rtl
+	.endproc
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_disable_layer_sub
+    ;;  description: disable background layers on sub screen
+    ;;  arguments:  A8 (layers to disable)
+    ;;  returns:    none
+    ;;  clobbers:   none
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_ppu_disable_layer_sub
+		eor #$ff
+		and se_v_ppu_ts_var
 		sta se_v_ppu_ts_var
 		rtl
 	.endproc
@@ -820,32 +852,30 @@
 
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;  se_one_vram_buffer_byte
+    ;;  se_vram_buffer_add
     ;;  description: add a one-byte tile to the vram buffer
-    ;;  arguments: 	a8 (tile)
-	;;				x16 (vram address)
+    ;;  arguments: 	a8 (VMAIN write)
+	;;				x8/x16 (tile)
+	;;				__rc2-__rc3 (vram address)
+	;;				__rc4-__rc6 (indirect address)
     ;;  returns:    none
     ;;  clobbers:   Y, P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	.proc se_one_vram_buffer_byte
+	.proc se_vram_buffer_add
 		.a8
-		.i16
+		.i8
 		ldy se_v_vram_buffer_index
 		
-		; fourth byte, the tile itself
-		sta se_v_vram_buffer + $03, y
-		
 		; first byte, the VMAIN write
-		lda #%10000000	; inc on hi byte
-						; byte-sized
-						; single entry
-						; no addr remap
-						; inc by 1spcPlaySound
 		sta se_v_vram_buffer + $00, y
+		
+		; fourth byte, the tile
+		txa
+		sta se_v_vram_buffer + $03, y
 
 		; second and third bytes, vram address
 		seta16
-		txa
+		lda __rc2
 		sta se_v_vram_buffer + $01, y
 
 		; increment offset
@@ -853,47 +883,6 @@
 		tya
 		clc
 		adc #4
-		sta se_v_vram_buffer_index
-
-		rtl
-	.endproc
-
-
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;  se_one_vram_buffer_word
-    ;;  description: add a two-byte tile to the vram buffer
-    ;;  arguments: 	a16 (tile)
-	;;				x16 (vram address)
-    ;;  returns:    none
-    ;;  clobbers:   Y, P
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	.proc se_one_vram_buffer_word
-		.a16
-		.i16
-		ldy se_v_vram_buffer_index
-		
-		; fourth byte, the tile itself
-		sta se_v_vram_buffer + $03, y
-		
-		; first byte, the VMAIN write
-		seta8
-		lda #%11000000	; inc on hi byte
-						; word-sized
-						; single entry
-						; no addr remap
-						; inc by 1spcPlaySound
-		sta se_v_vram_buffer + $00, y
-
-		; second and third bytes, vram address
-		seta16
-		txa
-		sta se_v_vram_buffer + $01, y
-
-		; increment offset
-		seta8
-		tya
-		clc
-		adc #5
 		sta se_v_vram_buffer_index
 
 		rtl
@@ -1092,7 +1081,7 @@
 			seta8
 			lda #1
 			@is_controller_poll_done:
-				tsb HVBJOY ;register is read-only
+				bit HVBJOY ;register is read-only
 				bne @is_controller_poll_done
 
 			seta16

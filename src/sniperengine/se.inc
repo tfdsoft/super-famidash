@@ -2,22 +2,27 @@ SE_BASE_ADDRESS = $809000
 
 
 
-SE_INIT =                   SE_BASE_ADDRESS
+SE_INIT =                   0
 
-SE_WAIT_VSYNC =             SE_BASE_ADDRESS + $03
+SE_WAIT_VSYNC =             1
 
-SE_PPU_DISABLE_NMI =        SE_BASE_ADDRESS + $06
-SE_CPU_ENABLE_NMI =         SE_BASE_ADDRESS + $09
+SE_CPU_DISABLE_NMI =        2
+SE_CPU_ENABLE_NMI =         3
 
-SE_PPU_DISABLE_RENDERING =  SE_BASE_ADDRESS + $0c
-SE_PPU_ENABLE_RENDERING =   SE_BASE_ADDRESS + $0f
+SE_PPU_DISABLE_RENDERING =  4
+SE_PPU_ENABLE_RENDERING =   5
 
-SE_PPU_SET_SCREEN_BRIGHTNESS =  SE_BASE_ADDRESS + $12
-SE_PPU_FADE_SCREEN_BRIGHTNESS = SE_BASE_ADDRESS + $15
+SE_PPU_SET_SCREEN_BRIGHTNESS =  6
+SE_PPU_FADE_SCREEN_BRIGHTNESS = 7 ; NO MEMES OR I KILL YOU. -usersniper
 
-SE_PPU_SET_PALETTE_COLOR =      SE_BASE_ADDRESS + $18
-SE_PPU_SET_PALETTE_SET =        SE_BASE_ADDRESS + $1b
-SE_PPU_CLEAR_PALETTE =          SE_BASE_ADDRESS + $1e
+SE_PPU_SET_PALETTE_COLOR =      8
+SE_PPU_SET_PALETTE_SET =        9
+SE_PPU_CLEAR_PALETTE =          10
+
+SE_PPU_ENABLE_LAYER_MAIN =		11
+SE_PPU_ENABLE_LAYER_SUB =		12
+SE_PPU_DISABLE_LAYER_MAIN =		13
+SE_PPU_DISABLE_LAYER_SUB =		14
 
 ;
 ;; (fututre ppu functions will go here)
@@ -60,6 +65,41 @@ SE_SINE_TABLE = 		SE_BASE_ADDRESS + $200
 SE_TEST =				SE_BASE_ADDRESS + $300
 SE_TEST_2 =				SE_BASE_ADDRESS + $303
 
+
+
+
+; this is the shittest macro in the history of history
+.macro ENGINECALL n, arg1, arg2, arg3, arg4, arg5
+	.if n = SE_PPU_SET_SCREEN_BRIGHTNESS
+		seta8
+		lda arg1
+	.endif
+
+	.if n = SE_PPU_FADE_SCREEN_BRIGHTNESS
+		setaxy8
+		lda arg1
+		ldx arg2
+	.endif
+
+	.if n = SE_PPU_SET_PALETTE_COLOR
+		seta16
+		setxy8
+		lda arg1
+		ldx arg2
+	.endif
+
+	.if n = SE_PPU_SET_PALETTE_SET
+		seta16
+        lda arg1
+        sta __rc2
+        seta8
+        lda arg2
+        sta __rc4
+        lda arg3
+	.endif
+
+	jsl SE_BASE_ADDRESS + (n*3)
+.endmacro
 
 
 

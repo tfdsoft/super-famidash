@@ -56,7 +56,7 @@
 
     se_v_ppu_inidisp_var:   .res 1
     se_v_ppu_objsel_var:    .res 1
-	.res 3 ; oam ports don't need saving
+	;.res 3 ; oam ports don't need saving
     se_v_ppu_bgmode_var:    .res 1
 	se_v_ppu_mosaic_var:	.res 1
     se_v_ppu_bg1sc_var:     .res 1
@@ -73,7 +73,7 @@
 	se_v_ppu_bg3vofs_var:	.res 2
 	se_v_ppu_bg4hofs_var:	.res 2
 	se_v_ppu_bg4vofs_var:	.res 2
-	.res 5 ; vram ports don't need saving
+	;.res 5 ; vram ports don't need saving
 	se_v_ppu_m7sel_var:		.res 1
 	se_v_ppu_m7a_var:		.res 2
 	se_v_ppu_m7b_var:		.res 2
@@ -81,7 +81,7 @@
 	se_v_ppu_m7d_var:		.res 2
 	se_v_ppu_m7x_var:		.res 2
 	se_v_ppu_m7y_var:		.res 2
-	.res 2 ; cgram ports don't need saving
+	;.res 2 ; cgram ports don't need saving
 	se_v_ppu_w12sel_var:	.res 1
 	se_v_ppu_w34sel_var:	.res 1
 	se_v_ppu_wobjsel_var:	.res 1
@@ -97,7 +97,7 @@
 	se_v_ppu_tsw_var:		.res 1
 	se_v_ppu_cgwsel_var:	.res 1
 	se_v_ppu_cgadsub_var:	.res 1
-	.res 1 ; why would you save COLDATA
+	;.res 1 ; why would you save COLDATA
 	se_v_ppu_setini_var:	.res 1
 
     se_v_cpu_nmitimen_var:  .res 1
@@ -1078,7 +1078,7 @@
 					seta16
 					asl
 					sta OAMADDL
-					lda #.loword(se_identity_table+$e0)
+					lda #.loword(se_identity_table+$f0)
 					sta DMAADDR+$70
 					ldx #^se_identity_table
 					stx DMAADDRBANK+$70

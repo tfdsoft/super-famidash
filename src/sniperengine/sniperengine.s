@@ -56,7 +56,9 @@
 
     se_v_ppu_inidisp_var:   .res 1
     se_v_ppu_objsel_var:    .res 1
+	.res 3 ; oam ports don't need saving
     se_v_ppu_bgmode_var:    .res 1
+	se_v_ppu_mosaic_var:	.res 1
     se_v_ppu_bg1sc_var:     .res 1
     se_v_ppu_bg2sc_var:     .res 1
     se_v_ppu_bg3sc_var:     .res 1
@@ -71,9 +73,32 @@
 	se_v_ppu_bg3vofs_var:	.res 2
 	se_v_ppu_bg4hofs_var:	.res 2
 	se_v_ppu_bg4vofs_var:	.res 2
-
+	.res 5 ; vram ports don't need saving
+	se_v_ppu_m7sel_var:		.res 1
+	se_v_ppu_m7a_var:		.res 2
+	se_v_ppu_m7b_var:		.res 2
+	se_v_ppu_m7c_var:		.res 2
+	se_v_ppu_m7d_var:		.res 2
+	se_v_ppu_m7x_var:		.res 2
+	se_v_ppu_m7y_var:		.res 2
+	.res 2 ; cgram ports don't need saving
+	se_v_ppu_w12sel_var:	.res 1
+	se_v_ppu_w34sel_var:	.res 1
+	se_v_ppu_wobjsel_var:	.res 1
+	se_v_ppu_wh0_var:		.res 1
+	se_v_ppu_wh1_var:		.res 1
+	se_v_ppu_wh2_var:		.res 1
+	se_v_ppu_wh3_var:		.res 1
+	se_v_ppu_wbglog_var:	.res 1
+	se_v_ppu_wobjlog_var:	.res 1
 	se_v_ppu_tm_var:		.res 1
 	se_v_ppu_ts_var:		.res 1
+	se_v_ppu_tmw_var:		.res 1
+	se_v_ppu_tsw_var:		.res 1
+	se_v_ppu_cgwsel_var:	.res 1
+	se_v_ppu_cgadsub_var:	.res 1
+	.res 1 ; why would you save COLDATA
+	se_v_ppu_setini_var:	.res 1
 
     se_v_cpu_nmitimen_var:  .res 1
 
@@ -1068,7 +1093,14 @@
             @skip_oam_upload:
 
 
+			; before vram updates, we need to
+			; update the ppu registers that aren't
+			; INIDISP
+			jsr __se_nmi_updateppuregs
+
+
 			;; START OF VRAM UPDATES
+			seta8
 			lda se_v_vram_update
 			beq @skip_vram_updates
 
@@ -1111,6 +1143,113 @@
         rti
     .endproc
 
+	.proc __se_nmi_updateppuregs
+		setaxy8
+		; load Y with BGMODE to cpy with
+		lda se_v_ppu_bgmode_var
+		and #%111
+
+		seta16
+
+		ldx se_v_ppu_objsel_var
+		stx OBSEL
+		lda se_v_ppu_bgmode_var ; and mosaic
+		sta BGMODE
+		lda se_v_ppu_bg1sc_var ; and bg2sc
+		sta BG1SC
+		lda se_v_ppu_bg3sc_var ; and bg4sc
+		sta BG3SC
+		lda se_v_ppu_bg12nba_var ; and bg34nba
+		sta BG12NBA
+		
+		ldx se_v_ppu_bg1hofs_var+0
+		stx BG1HOFS
+		ldx se_v_ppu_bg1hofs_var+1
+		stx BG1HOFS
+		ldx se_v_ppu_bg1vofs_var+0
+		stx BG1VOFS
+		ldx se_v_ppu_bg1vofs_var+1
+		stx BG1VOFS
+
+		cpy #7
+		beq @skip_non_mode7_bgs
+			ldx se_v_ppu_bg2hofs_var+0
+			stx BG2HOFS
+			ldx se_v_ppu_bg2hofs_var+1
+			stx BG2HOFS
+			ldx se_v_ppu_bg2vofs_var+0
+			stx BG2VOFS
+			ldx se_v_ppu_bg2vofs_var+1
+			stx BG2VOFS
+			
+			ldx se_v_ppu_bg3hofs_var+0
+			stx BG3HOFS
+			ldx se_v_ppu_bg3hofs_var+1
+			stx BG3HOFS
+			ldx se_v_ppu_bg3vofs_var+0
+			stx BG3VOFS
+			ldx se_v_ppu_bg3vofs_var+1
+			stx BG3VOFS
+
+			ldx se_v_ppu_bg4hofs_var+0
+			stx BG4HOFS
+			ldx se_v_ppu_bg4hofs_var+1
+			stx BG4HOFS
+			ldx se_v_ppu_bg4vofs_var+0
+			stx BG4VOFS
+			ldx se_v_ppu_bg4vofs_var+1
+			stx BG4VOFS
+		@skip_non_mode7_bgs:
+
+		cpy #7
+		bne @skip_mode_7_regs
+			ldx se_v_ppu_m7a_var+0
+			stx M7A
+			ldx se_v_ppu_m7a_var+1
+			stx M7A
+			ldx se_v_ppu_m7b_var+0
+			stx M7B
+			ldx se_v_ppu_m7b_var+1
+			stx M7B
+			ldx se_v_ppu_m7c_var+0
+			stx M7C
+			ldx se_v_ppu_m7c_var+1
+			stx M7C
+			ldx se_v_ppu_m7d_var+0
+			stx M7D
+			ldx se_v_ppu_m7d_var+1
+			stx M7D
+			ldx se_v_ppu_m7x_var+0
+			stx M7X
+			ldx se_v_ppu_m7x_var+1
+			stx M7X
+			ldx se_v_ppu_m7y_var+0
+			stx M7Y
+			ldx se_v_ppu_m7y_var+1
+			stx M7Y
+		@skip_mode_7_regs:
+
+		lda se_v_ppu_w12sel_var ; and w34sel
+		sta W12SEL
+		lda se_v_ppu_wobjsel_var ; and wh0
+		sta WOBJSEL
+		lda se_v_ppu_wh1_var ; and wh2
+		sta WH1
+		lda se_v_ppu_wh3_var ; and wbglog
+		sta WH3
+		lda se_v_ppu_wobjlog_var ; and tm
+		sta WOBJLOG
+		lda se_v_ppu_ts_var ; and tmw
+		sta TS
+		lda se_v_ppu_tsw_var ; and cgwsel
+		sta TSW
+		ldx se_v_ppu_cgadsub_var
+		stx CGADSUB
+		ldx se_v_ppu_setini_var
+		stx SETINI
+
+		rts
+	.endproc
 
     .export irq
     .proc irq

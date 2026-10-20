@@ -71,6 +71,7 @@
         
         ; turn on the screen; all the changes done to vram/cgram
         ; will be updated in nmi
+        ENGINECALL SE_PPU_ENABLE_LAYER_MAIN, #%10001
         ENGINECALL SE_PPU_ENABLE_RENDERING
 
         ENGINECALL SE_PPU_FADE_SCREEN_BRIGHTNESS, #0, #15

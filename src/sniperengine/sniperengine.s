@@ -125,13 +125,13 @@
     jmp se_ppu_set_palette_set			;1b
     jmp se_ppu_clear_palette			;1e
 
+	; TODO: replace with a common SE_PPU_REG_WRITE routine
 	jmp se_ppu_enable_layer_main		;21
 	jmp se_ppu_enable_layer_sub			;24
 	jmp se_ppu_disable_layer_main		;27
 	jmp se_ppu_disable_layer_sub		;2a
 
-	;; FOR FUTURE PPU FUNCTIONS (there will be more)
-	jmp _UNUSED							;2d
+	jmp se_vram_buffer_add				;2d
 
 	;; oam stuff
 	jmp se_oam_clear					;30
@@ -880,39 +880,102 @@
     ;;  se_vram_buffer_add
     ;;  description: add a one-byte tile to the vram buffer
     ;;  arguments: 	a8 (VMAIN write)
-	;;				x8/x16 (tile)
+	;;				x8/x16 (tile) 
 	;;				__rc2-__rc3 (vram address)
-	;;				__rc4-__rc6 (indirect address)
+	;;				__rc4-__rc6 (tile data address)
+	;;				__rc7 (length of data)
     ;;  returns:    none
     ;;  clobbers:   Y, P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_vram_buffer_add
 		.a8
-		.i8
+		phx
+		php
+		setxy8
 		ldy se_v_vram_buffer_index
-		
-		; first byte, the VMAIN write
-		sta se_v_vram_buffer + $00, y
-		
-		; fourth byte, the tile
-		txa
-		sta se_v_vram_buffer + $03, y
+		plp
+		plx
 
-		; second and third bytes, vram address
+		; byte 1, VMAIN write
+		pha
+		sta se_v_vram_buffer + 0, y
+
+		; byte 2/3, vram address
 		seta16
 		lda __rc2
-		sta se_v_vram_buffer + $01, y
+		sta se_v_vram_buffer + 1, y
 
-		; increment offset
+		; byte 4 and beyond, the complicated bit
 		seta8
-		tya
-		clc
-		adc #4
-		sta se_v_vram_buffer_index
+		pla
+		;pha
+		bit #%00010000 ; check single/multi
+		bne @is_multi_entry ; is single if bit 4 is reset
 
+		@is_single_entry:
+			; indirect bit can be ignored, and the
+			; single entry can be tacked on.
+			
+			;check size
+			bit #%01000000
+			beq @single_byte
+
+			@single_word:
+				seta16
+				txa
+				sta se_v_vram_buffer + 3, y
+				seta8
+				iny
+				bra :+
+
+			@single_byte:
+				txa
+				sta se_v_vram_buffer + 3, y
+
+			:
+			tya
+			clc
+			adc #4
+			sta se_v_vram_buffer_index
+
+			bra @exit
+
+		@is_multi_entry:
+
+
+		@exit:
 		rtl
 	.endproc
 
+	;is_indirect
+		; copy the address over the data length
+		; and address, then exit
+			;seta16
+			;lda __rc4
+			;sta se_v_vram_buffer + 4, y ; address, lo/hi
+			;lda __rc6
+			;seta8
+			;sta se_v_vram_buffer + 6, y ; address, bank
+			;xba
+			;sta se_v_vram_buffer + 3, y ; length of data
+
+			;tya
+			;clc
+			;adc #1+2+1+3 ;VMAIN, vramaddr, len, indirect addr
+			;sta se_v_vram_buffer_index
+
+			;rtl
+
+
+		;@is_direct:
+			;bit #%00010000 ; single or multiple?
+			;beq @is_single_entry
+
+
+
+			;@is_single_entry:
+
+			;lda __rc7
 
 
 

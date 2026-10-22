@@ -76,6 +76,10 @@
 
         ENGINECALL SE_PPU_FADE_SCREEN_BRIGHTNESS, #0, #15
 
+        wdm #0
+
+        ENGINECALL SE_VRAM_BUFFER_ADD, #%01000000, #$2020, #$8080
+
 
     @loop:
         ENGINECALL SE_WAIT_VSYNC

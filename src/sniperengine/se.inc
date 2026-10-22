@@ -19,10 +19,13 @@ SE_PPU_SET_PALETTE_COLOR =      8
 SE_PPU_SET_PALETTE_SET =        9
 SE_PPU_CLEAR_PALETTE =          10
 
+; TODO: replace with a common SE_PPU_REG_WRITE routine
 SE_PPU_ENABLE_LAYER_MAIN =		11
 SE_PPU_ENABLE_LAYER_SUB =		12
 SE_PPU_DISABLE_LAYER_MAIN =		13
 SE_PPU_DISABLE_LAYER_SUB =		14
+
+SE_VRAM_BUFFER_ADD =			15
 
 ;
 ;; (fututre ppu functions will go here)
@@ -71,7 +74,7 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 ; this is the shittest macro in the history of history
 .macro ENGINECALL n, arg1, arg2, arg3, arg4, arg5
 
-	.if n >= 15
+	.if n >= 16
 		.error "invalid engine call!"
 	.endif
 
@@ -129,6 +132,26 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 			clc
 		.else
 			sec
+		.endif
+	.endif
+
+	.if n = SE_VRAM_BUFFER_ADD
+		; arg1 = vmain write (a)
+		; arg2 = tile (x8/x16) / length (__rc7)
+		; arg3 = vram address (__rc2-__rc3)
+		; arg4 = tile data addr (__rc4-__rc6)
+		
+		.ifnblank arg4 ; if tile data address
+			.error "vram buffer multi not implemented yet!"
+
+		.else ; if no tile data address, its probably one tile
+			setaxy16
+			lda arg3
+			sta __rc2
+			lda arg2
+			tax
+			seta8
+			lda arg1
 		.endif
 	.endif
 

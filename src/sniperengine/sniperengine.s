@@ -956,7 +956,19 @@
 
 
 			@is_indirect:
+				seta16
+				lda __rc4
+				sta se_v_vram_buffer + 4, y ; address, lo/hi
+				lda __rc6
+				seta8
+				sta se_v_vram_buffer + 6, y ; address, bank
+				xba
+				sta se_v_vram_buffer + 3, y ; length of data
 
+				tya
+				clc
+				adc #1+2+1+3 ;VMAIN, vramaddr, len, indirect addr
+				sta se_v_vram_buffer_index
 
 
 		@exit:
@@ -966,19 +978,7 @@
 	;is_indirect
 		; copy the address over the data length
 		; and address, then exit
-			;seta16
-			;lda __rc4
-			;sta se_v_vram_buffer + 4, y ; address, lo/hi
-			;lda __rc6
-			;seta8
-			;sta se_v_vram_buffer + 6, y ; address, bank
-			;xba
-			;sta se_v_vram_buffer + 3, y ; length of data
-
-			;tya
-			;clc
-			;adc #1+2+1+3 ;VMAIN, vramaddr, len, indirect addr
-			;sta se_v_vram_buffer_index
+			
 
 			;rtl
 

@@ -86,7 +86,7 @@
 
         ;; multi entry tests
         ; VMAIN/properties, length, vram addr, tile data addr
-        ENGINECALL SE_VRAM_BUFFER_ADD, #10010000, #$10, #$9000, #d_super_cool_palette; multi-byte, direct
+        ENGINECALL SE_VRAM_BUFFER_ADD, #10010000, #$10, #$9000, #d_super_cool_palette ; multi-byte, direct
 
 
     @loop:

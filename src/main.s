@@ -76,9 +76,17 @@
 
         ENGINECALL SE_PPU_FADE_SCREEN_BRIGHTNESS, #0, #15
 
+
         wdm #0
 
-        ENGINECALL SE_VRAM_BUFFER_ADD, #%01000000, #$2020, #$8080
+        ;; single entry tests
+        ; VMAIN/properties, tile(8/16), vram addr
+        ENGINECALL SE_VRAM_BUFFER_ADD, #%11000000, #$2020, #$8080 ; word
+        ENGINECALL SE_VRAM_BUFFER_ADD, #%10000000, #$50, #$8083 ; byte
+
+        ;; multi entry tests
+        ; VMAIN/properties, length, vram addr, tile data addr
+        ENGINECALL SE_VRAM_BUFFER_ADD, #10010000, #$10, #$9000, #d_super_cool_palette; multi-byte, direct
 
 
     @loop:

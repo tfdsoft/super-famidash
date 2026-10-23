@@ -941,6 +941,22 @@
 			bra @exit
 
 		@is_multi_entry:
+			pha
+
+			;write length
+			lda __rc7
+			sta se_v_vram_buffer + 3, y
+
+			pla
+			bit #%00100000 ; check indirect
+			bne @is_indirect
+
+			@is_direct:
+
+
+
+			@is_indirect:
+
 
 
 		@exit:

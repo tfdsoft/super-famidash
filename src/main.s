@@ -82,7 +82,7 @@
         ;; single entry tests
         ; VMAIN/properties, tile(8/16), vram addr
         ENGINECALL SE_VRAM_BUFFER_ADD, #%11000000, #$2020, #$8080 ; word
-        ENGINECALL SE_VRAM_BUFFER_ADD, #%10000000, #$50, #$8083 ; byte
+        ENGINECALL SE_VRAM_BUFFER_ADD, #%00000000, #$50, #$8083 ; byte
 
         ;; multi entry tests
         ; VMAIN/properties, length, vram addr, tile data addr

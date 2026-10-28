@@ -996,7 +996,7 @@
         adc     __rc2
 		@LBB0_21:
         sta     se_v_vram_buffer_index
-        rts
+        rtl
 
 main:
         ldy     #102
@@ -1016,7 +1016,7 @@ main:
         jsr     se_vram_buffer_add
         ldx     #0
         txa
-        rts
+        rtl
 	.endproc
 
 	;is_indirect

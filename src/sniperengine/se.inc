@@ -136,23 +136,29 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 	.endif
 
 	.if n = SE_VRAM_BUFFER_ADD
-		; arg1 = vmain write (a)
-		; arg2 = tile (x8/x16) / length (__rc7)
-		; arg3 = vram address (__rc2-__rc3)
-		; arg4 = tile data addr (__rc4-__rc6)
-		
-		.ifnblank arg4 ; if tile data address
-			.error "vram buffer multi not implemented yet!"
+		; arg1 = vmain write (a8)
+		; arg2 = tile OR length of data (x8/__rc2)
+		; arg3 = vram address (__rc3-__rc4)
+		; arg4 = tile data addr (__rc5-__rc7)
 
-		.else ; if no tile data address, its probably one tile
-			setaxy16
-			lda arg3
-			sta __rc2
-			lda arg2
-			tax
-			seta8
-			lda arg1
+		setaxy16
+		.ifnblank arg4  ; if tile data address is not empty,
+						; it's multi! populate __rc5-__rc7
+			lda #<arg4
+			sta __rc5
+			setxy8
+			ldx #^arg4
+			stx __rc7
 		.endif
+		lda arg3
+		sta __rc3
+		lda arg2
+		setaxy8
+		xba
+		sta __rc2
+		xba
+		tax
+		lda arg1
 	.endif
 
 	jsl SE_BASE_ADDRESS + (n*3)

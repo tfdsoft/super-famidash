@@ -880,99 +880,143 @@
     ;;  se_vram_buffer_add
     ;;  description: add a one-byte tile to the vram buffer
     ;;  arguments: 	a8 (VMAIN write)
-	;;				x8/x16 (tile) 
-	;;				__rc2-__rc3 (vram address)
-	;;				__rc4-__rc6 (tile data address)
-	;;				__rc7 (length of data)
+	;;				x8/__rc2 (tile lo/hi OR length lo/hi) 
+	;;				__rc3-__rc4 (vram address)
+	;;				__rc5-__rc7 (tile data address)
     ;;  returns:    none
-    ;;  clobbers:   Y, P
+    ;;  clobbers:   Y, P, __rc8, __rc9, __rc10
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;	NOTE: THIS CODE WAS GENERATED WITH THE LLVM-MOS
+	;;	COMPILER. IT IS NOT FULLY-OPTIMIZED AND *WILL* BE
+	;;	REWRITTEN LATER ON. this note was written for dajin
+	;;	who i can guarantee is gonna skim through this at some
+	;;	point lol. hi!
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_vram_buffer_add
-		.a8
-		phx
-		php
-		setxy8
-		ldy se_v_vram_buffer_index
-		plp
-		plx
+        sta     __rc9
+        ldy     __rc2
+        sty     __rc8
+        lda     __rc3
+        ldy     se_v_vram_buffer_index
+        sta     se_v_vram_buffer+1,y
+        lda     __rc4
+        sta     se_v_vram_buffer+2,y
+        lda     __rc9
+        sta     se_v_vram_buffer,y
+        sta     __rc4
+        and     #16
+        bne     @LBB0_4
+        txa
+        sta     se_v_vram_buffer+3,y
+        lda     __rc4
+        and     #64
+        beq     @LBB0_3
+        lda     __rc2
+        sta     se_v_vram_buffer+4,y
+        iny
+		@LBB0_3:
+        tya
+        clc
+        adc     #4
+        jmp     @LBB0_21
+		@LBB0_4:
+        txa
+        sta     se_v_vram_buffer+4,y
+        sta     se_v_vram_buffer+5,y
+        lda     __rc4
+        and     #32
+        bne     @LBB0_7
+        clc
+        tya
+        adc     #5
+        sta     __rc2
+        sta     se_v_vram_buffer_index
+        lda     __rc4
+        and     #64
+        bne     @LBB0_8
+        txa
+        bra     @LBB0_9
+		@LBB0_7:
+        lda     __rc5
+        sta     se_v_vram_buffer+6,y
+        lda     __rc6
+        sta     se_v_vram_buffer+7,y
+        lda     __rc7
+        sta     se_v_vram_buffer+8,y
+        clc
+        tya
+        adc     #8
+        jmp     @LBB0_21
+		@LBB0_8:
+        txa
+        asl
+        rol     __rc8
+		@LBB0_9:
+        sta     __rc3
+        ldx     __rc8
+        bne     @LBB0_11
+        tax
+        beq     @LBB0_20
+		@LBB0_11:
+        ;ldx     __rc5
+        ;stx     __rc4
+        ;ldx     __rc6
+        ;stx     __rc5
+        clc
+        lda     #.lobyte(se_v_vram_buffer)
+        adc     __rc2
+        sta     __rc9
+        lda     #.hibyte(se_v_vram_buffer)
+        adc     #0
+        sta     __rc10
+        ldx     __rc3
+		@LBB0_12:
+        lda     [__rc5]	; TODO: replace this copy loop with
+        sta     (__rc9)	; `mvp` block copy instruction
+        inc     __rc9
+        bne     @LBB0_14
+        inc     __rc10
+		@LBB0_14:
+        dex
+        cpx     #255
+        bne     @LBB0_16
+        dec     __rc8
+		@LBB0_16:
+        inc     __rc5
+        bne     @LBB0_18
+        inc     __rc6
+		@LBB0_18:
+        lda     __rc8
+        bne     @LBB0_12
+        txa
+        bne     @LBB0_12
+		@LBB0_20:
+        clc
+        lda     __rc3
+        adc     __rc2
+		@LBB0_21:
+        sta     se_v_vram_buffer_index
+        rts
 
-		; byte 1, VMAIN write
-		pha
-		sta se_v_vram_buffer + 0, y
-
-		; byte 2/3, vram address
-		seta16
-		lda __rc2
-		sta se_v_vram_buffer + 1, y
-
-		; byte 4 and beyond, the complicated bit
-		seta8
-		pla
-		;pha
-		bit #%00010000 ; check single/multi
-		bne @is_multi_entry ; is single if bit 4 is reset
-
-		@is_single_entry:
-			; indirect bit can be ignored, and the
-			; single entry can be tacked on.
-			
-			;check size
-			bit #%01000000
-			beq @single_byte
-
-			@single_word:
-				seta16
-				txa
-				sta se_v_vram_buffer + 3, y
-				seta8
-				iny
-				bra :+
-
-			@single_byte:
-				txa
-				sta se_v_vram_buffer + 3, y
-
-			:
-			tya
-			clc
-			adc #4
-			sta se_v_vram_buffer_index
-
-			bra @exit
-
-		@is_multi_entry:
-			pha
-
-			;write length
-			lda __rc7
-			sta se_v_vram_buffer + 3, y
-
-			pla
-			bit #%00100000 ; check indirect
-			bne @is_indirect
-
-			@is_direct:
-
-
-
-			@is_indirect:
-				seta16
-				lda __rc4
-				sta se_v_vram_buffer + 4, y ; address, lo/hi
-				lda __rc6
-				seta8
-				sta se_v_vram_buffer + 6, y ; address, bank
-				xba
-				sta se_v_vram_buffer + 3, y ; length of data
-
-				tya
-				clc
-				adc #1+2+1+3 ;VMAIN, vramaddr, len, indirect addr
-				sta se_v_vram_buffer_index
-
-
-		@exit:
-		rtl
+main:
+        ldy     #102
+        ldx     #119
+        lda     #34
+        sta     __rc2
+        lda     #51
+        sta     __rc3
+        lda     #68
+        sta     __rc4
+        lda     #85
+        sta     __rc5
+        sty     __rc6
+        stx     __rc7
+        ldx     #17
+        lda     #144
+        jsr     se_vram_buffer_add
+        ldx     #0
+        txa
+        rts
 	.endproc
 
 	;is_indirect

@@ -1222,8 +1222,10 @@
 
         @skip_all_updates:
 
+		seta8
         lda se_v_ppu_inidisp_var
         sta INIDISP
+		stz OBSEL
         
         inc se_v_frame_count
 

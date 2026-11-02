@@ -77,8 +77,8 @@
         ENGINECALL SE_PPU_FADE_SCREEN_BRIGHTNESS, #0, #15
 
 
+        
         wdm #0
-
         ;; single entry tests
         ; VMAIN/properties, tile(8/16), vram addr
         ENGINECALL SE_VRAM_BUFFER_ADD, #%11000000, #$2020, #$8080 ; word
@@ -86,18 +86,19 @@
 
         ;; multi entry tests
         ; VMAIN/properties, length, vram addr, tile data addr
+        wdm #0
         ENGINECALL SE_VRAM_BUFFER_ADD, #%10010000, #$10, #$9000, d_super_cool_palette ; multi-byte, direct
 
 
     @loop:
         ENGINECALL SE_WAIT_VSYNC
-        ;jsl SE_OAM_CLEAR
+        ENGINECALL SE_OAM_CLEAR
 
         seta8
         setxy16
         jsl SPC_PROCESS
 
-        jsl SE_TEST
+        ;jsl SE_TEST
         ;seta8
         ;setxy8
 

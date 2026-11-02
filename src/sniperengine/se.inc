@@ -74,7 +74,7 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 ; this is the shittest macro in the history of history
 .macro ENGINECALL n, arg1, arg2, arg3, arg4, arg5
 
-	.if n >= 16
+	.if n >= 17
 		.error "invalid engine call!"
 	.endif
 

@@ -271,7 +271,7 @@
         stz .lobyte(TM)      ; and TS
         stz .lobyte(TMW)     ; and TSW
         ; these registers need 8-bit writes
-        seta8
+        setaxy8
         sta .lobyte(VMAIN)
         stz .lobyte(M7SEL)
         stz .lobyte(CGADD)
@@ -300,9 +300,13 @@
         stz .lobyte(M7Y)
 
         ; reset direct page back to zeropage
-        setaxy16
+        seta16
         lda #$0000
         tcd
+
+		ldx #124
+		stx se_v_oam_count
+
 
         ; return with register sizes intact
         plp
@@ -706,35 +710,36 @@
     ;;  description: clear oam lmao
     ;;  arguments:  none
     ;;  returns:    none
-    ;;  clobbers:   A, X, P
+    ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_oam_clear
 		;turns out i DO need all of this
-		seta16
-        setxy8
-		lda #.loword(se_v_oam1_buffer)
-		ldx #^se_v_oam1_buffer
-		sta WMADDL
-		stx WMADDH
+		php
+		;seta16
+        ;setxy8
+		;lda #.loword(se_v_oam1_buffer)
+		;ldx #^se_v_oam1_buffer
+		;sta WMADDL
+		;stx WMADDH
 
-        ldx #DMA_LINEAR|DMA_CONST
-        stx DMAMODE+$70
-        ldx #.lobyte(WMDATA)
-        stx DMAPPUREG+$70
-        lda #.loword(se_identity_table)+$e0
-        ldx #^se_identity_table
-        sta DMAADDR+$70
-        stx DMAADDRBANK+$70
-		lda #544
-        sta DMALEN+$70  ; 0 length = $10000
+        ;ldx #DMA_LINEAR|DMA_CONST
+        ;stx DMAMODE+$70
+        ;ldx #.lobyte(WMDATA)
+        ;stx DMAPPUREG+$70
+        ;lda #.loword(se_identity_table)+$e0
+        ;ldx #^se_identity_table
+        ;sta DMAADDR+$70
+        ;stx DMAADDRBANK+$70
+		;lda #544
+        ;sta DMALEN+$70  ; 0 length = $10000
 
-		ldx #%10000000
-		stx COPYSTART
+		;ldx #%10000000
+		;stx COPYSTART
 
 		seta8
-
 		stz se_v_oam_count
 
+		plp
 		rtl
 	.endproc
 
@@ -997,45 +1002,9 @@
 		@LBB0_21:
         sta     se_v_vram_buffer_index
         rtl
-
-main:
-        ldy     #102
-        ldx     #119
-        lda     #34
-        sta     __rc2
-        lda     #51
-        sta     __rc3
-        lda     #68
-        sta     __rc4
-        lda     #85
-        sta     __rc5
-        sty     __rc6
-        stx     __rc7
-        ldx     #17
-        lda     #144
-        jsr     se_vram_buffer_add
-        ldx     #0
-        txa
-        rtl
 	.endproc
 
-	;is_indirect
-		; copy the address over the data length
-		; and address, then exit
-			
-
-			;rtl
-
-
-		;@is_direct:
-			;bit #%00010000 ; single or multiple?
-			;beq @is_single_entry
-
-
-
-			;@is_single_entry:
-
-			;lda __rc7
+	
 
 
 

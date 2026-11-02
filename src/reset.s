@@ -24,9 +24,6 @@
         pha
         plb
 
-    ; init everything
-        ENGINECALL SE_INIT
-
     ; clear RAM
         seta16
         setxy8
@@ -43,6 +40,9 @@
         ldx #128      ; channel 0 (1 << n)
         stx COPYSTART   ; start the transfer
         stx COPYSTART   ; do it again!
+
+    ; init everything
+        ENGINECALL SE_INIT
 
     ;
     ;;  TODO: add more clear routines here

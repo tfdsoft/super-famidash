@@ -17,6 +17,7 @@
 
 .segment "BSS"
     test: .res 1
+    funny_scroll_value: .res 2
     
 .segment "HIRAM1"   : far
 .segment "HIRAM2"   : far
@@ -77,42 +78,40 @@
         ENGINECALL SE_PPU_FADE_SCREEN_BRIGHTNESS, #0, #15
 
 
-        
-        wdm #0
+        ;wdm #0
         ;; single entry tests
         ; VMAIN/properties, tile(8/16), vram addr
-        ENGINECALL SE_VRAM_BUFFER_ADD, #%11000000, #$2020, #$8080 ; word
-        ENGINECALL SE_VRAM_BUFFER_ADD, #%00000000, #$50, #$8083 ; byte
+        ;ENGINECALL SE_VRAM_BUFFER_ADD, #%11000000, #$2020, #$8080 ; word
+        ;ENGINECALL SE_VRAM_BUFFER_ADD, #%00000000, #$50, #$8083 ; byte
 
         ;; multi entry tests
         ; VMAIN/properties, length, vram addr, tile data addr
-        wdm #0
-        ENGINECALL SE_VRAM_BUFFER_ADD, #%10010000, #$10, #$9000, d_super_cool_palette ; multi-byte, direct
+        ;wdm #0
+        ;ENGINECALL SE_VRAM_BUFFER_ADD, #%10010000, #$10, #$9000, d_super_cool_palette ; multi-byte, direct
 
 
-    @loop:
-        ENGINECALL SE_WAIT_VSYNC
-        ENGINECALL SE_OAM_CLEAR
+        @loop:
+            ENGINECALL SE_WAIT_VSYNC
+            ENGINECALL SE_OAM_CLEAR
 
-        seta8
-        setxy16
-        jsl SPC_PROCESS
+            seta8
+            setxy16
+            jsl SPC_PROCESS
 
-        ;jsl SE_TEST
-        ;seta8
-        ;setxy8
+            seta16
+            lda #$800
+            @1:
+                dec
+                bne @1
 
-        ;lda #15
-        ;ldx #0
+            
+            inc funny_scroll_value
+            ENGINECALL SE_PPU_SET_SCROLL, #0, funny_scroll_value, #0
 
-        ;jsl SE_PPU_FADE_SCREEN_BRIGHTNESS
-        ;lda #RGB(27,0,14)
-        ;ldx #0
-        ;jsl SE_PPU_SET_PALETTE_COLOR
+            ENGINECALL SE_GRAY_LINE
 
-
-        bra @loop
-
+            brl @loop
+            
 
 
 ignore_interrupt:

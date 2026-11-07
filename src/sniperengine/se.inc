@@ -25,7 +25,7 @@ SE_PPU_ENABLE_LAYER_SUB =		12
 SE_PPU_DISABLE_LAYER_MAIN =		13
 SE_PPU_DISABLE_LAYER_SUB =		14
 
-SE_VRAM_BUFFER_ADD =			15
+SE_GRAY_LINE =					15
 
 ;
 ;; (fututre ppu functions will go here)
@@ -33,6 +33,19 @@ SE_VRAM_BUFFER_ADD =			15
 
 SE_OAM_CLEAR = 					16
 SE_OAM_DRAW_SPRITE = 			17
+SE_OAM_DRAW_METASPRITE =		18
+
+
+SE_VRAM_BUFFER_FLUSH =			19
+SE_VRAM_BUFFER_ADD =			20
+
+
+
+SE_PPU_SET_SCROLL =				32
+
+
+
+
 
 
 
@@ -74,9 +87,9 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 ; this is the shittest macro in the history of history
 .macro ENGINECALL n, arg1, arg2, arg3, arg4, arg5
 
-	.if n >= 17
-		.error "invalid engine call!"
-	.endif
+	;.if n >= 34
+	;	.error "invalid engine call!"
+	;.endif
 
 
 	.if n = SE_PPU_SET_SCREEN_BRIGHTNESS
@@ -158,6 +171,17 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 		sta __rc2
 		xba
 		tax
+		lda arg1
+	.endif
+
+
+	.if n = SE_PPU_SET_SCROLL
+		seta16
+		lda arg2
+		sta __rc2
+		lda arg3
+		sta __rc4
+		seta8
 		lda arg1
 	.endif
 

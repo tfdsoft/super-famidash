@@ -110,39 +110,66 @@
     jmp se_init 						;00
 
     ;; PPU ROUTINES
-    jmp se_wait_vsync					;03
+    jmp se_wait_vsync					;03	 1
 
 	;; cpu nmi flag
-    jmp se_cpu_disable_nmi				;06
-    jmp se_cpu_enable_nmi				;09
+    jmp se_cpu_disable_nmi				;06	 2
+    jmp se_cpu_enable_nmi				;09	 3
 
 	;; ppu whatnots
-    jmp se_ppu_disable_rendering		;0c
-    jmp se_ppu_enable_rendering			;0f
-    jmp se_ppu_set_screen_brightness	;12
-    jmp se_ppu_fade_screen_brightness	;15
-    jmp se_ppu_set_palette_color		;18
-    jmp se_ppu_set_palette_set			;1b
-    jmp se_ppu_clear_palette			;1e
+    jmp se_ppu_disable_rendering		;0c	 4
+    jmp se_ppu_enable_rendering			;0f	 5
+    jmp se_ppu_set_screen_brightness	;12	 6
+    jmp se_ppu_fade_screen_brightness	;15	 7
+    jmp se_ppu_set_palette_color		;18	 8
+    jmp se_ppu_set_palette_set			;1b	 9
+    jmp se_ppu_clear_palette			;1e	10
 
 	; TODO: replace with a common SE_PPU_REG_WRITE routine
-	jmp se_ppu_enable_layer_main		;21
-	jmp se_ppu_enable_layer_sub			;24
-	jmp se_ppu_disable_layer_main		;27
-	jmp se_ppu_disable_layer_sub		;2a
+	jmp se_ppu_enable_layer_main		;21	11
+	jmp se_ppu_enable_layer_sub			;24	12
+	jmp se_ppu_disable_layer_main		;27	13
+	jmp se_ppu_disable_layer_sub		;2a	14
 
-	jmp se_vram_buffer_add				;2d
+	jmp se_gray_line					;2d 15
 
 	;; oam stuff
-	jmp se_oam_clear					;30
-	jmp se_oam_draw_sprite				;33
-	jmp _UNUSED
+	jmp se_oam_clear					;30	16
+	jmp se_oam_draw_sprite				;33	17
+	jmp _UNUSED ; TO BE OAM_DRAW_METASPRITE	;36 18
+
+
+	;; vram buffer stuff
+	jmp _UNUSED ; se_vram_buffer_flush		;39	19
+
+	; se_vram_buffer_add is the general-purpose
+	; version of the function, where the programmer
+	; must specify everything.
+	jmp se_vram_buffer_add				;3c	20
+
+	; the below vram_buffer_add functions are helpers,
+	; where some parameters are already filled in.
+	jmp _UNUSED ; se_vram_buffer_add_character	;3f	21
+	jmp _UNUSED ; se_vram_buffer_add_string		;42	22
+	jmp _UNUSED		;45 23
+	jmp _UNUSED		;48	24
+	jmp _UNUSED		;4b	25
+	jmp _UNUSED		;4e 26
+	jmp _UNUSED		;51 27
+	jmp _UNUSED		;54 28
+	jmp _UNUSED		;57 29
+	jmp _UNUSED		;5a 30
+	jmp _UNUSED		;5d 31
+
+	jmp se_ppu_set_scroll	;60 32
+
+
 
 
 
     .align 128  ; SNESMOD STUFF			
 
-    jmp spcBoot							;80
+    jmp spcBoot							;80	 0
 	
 	jmp spcSetBank
 	jmp spcLoad
@@ -529,7 +556,7 @@
     ;;  arguments:  A8 (palette set, 0-15)
     ;;              __rc2-__rc4 (pointer to data, 24-bit)
     ;;  returns:    none
-    ;;  clobbers:   X,Y,__rc6-__rc9
+    ;;  clobbers:   X,Y,P,__rc6-__rc9
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_set_palette_set
         .a8
@@ -653,6 +680,7 @@
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_ppu_enable_layer_main
+		.a8
 		ora se_v_ppu_tm_var
 		sta se_v_ppu_tm_var
 		rtl
@@ -667,6 +695,7 @@
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_ppu_enable_layer_sub
+		.a8
 		ora se_v_ppu_ts_var
 		sta se_v_ppu_ts_var
 		rtl
@@ -681,6 +710,7 @@
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_ppu_disable_layer_main
+		.a8
 		eor #$ff
 		and se_v_ppu_tm_var
 		sta se_v_ppu_tm_var
@@ -696,9 +726,37 @@
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_ppu_disable_layer_sub
+		.a8
 		eor #$ff
 		and se_v_ppu_ts_var
 		sta se_v_ppu_ts_var
+		rtl
+	.endproc
+
+
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_set_scroll
+    ;;  description: set the scroll value for a given background
+    ;;  arguments: 	a8 (the background layer)
+	;;				__rc2-__rc3 (x scroll)
+	;;				__rc4-__rc5 (y scroll)
+    ;;  returns:    none
+    ;;  clobbers:   X, P
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_ppu_set_scroll
+		setaxy8
+		and #%00000011
+		asl ;
+		asl ;;	multiply index by 4
+		tax ;
+		seta16
+		lda __rc2
+		sta se_v_ppu_bg1hofs_var, x ; x register selects the
+		lda __rc4					; background layer
+		sta se_v_ppu_bg1vofs_var, x
+
 		rtl
 	.endproc
 
@@ -828,6 +886,44 @@
 	.endproc
 
 	;; TODO: metasprite function
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;	se_gray_line
+	;;	description: draw a gray line on the screen.
+	;;	arguments:	none
+	;;	returns: 	none
+	;;	clobbers:	A, P
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_gray_line
+		seta8
+		lda se_v_ppu_inidisp_var
+		and #$80
+		ora #$03
+		sta $842100 ; INIDISP via bank $84
+
+		lda #41
+		@1:
+			dec
+			bne @1
+
+		lda se_v_ppu_inidisp_var
+		and #$80
+		ora #$0c
+		sta $8c2100 ; INIDISP via bank $8c
+
+		lda #42
+		@2:
+			dec
+			bne @2
+
+		lda se_v_ppu_inidisp_var
+		sta INIDISP
+
+		rtl
+	.endproc
+
+
 
 
 	;;
@@ -1003,7 +1099,6 @@
         sta     se_v_vram_buffer_index
         rtl
 	.endproc
-
 	
 
 

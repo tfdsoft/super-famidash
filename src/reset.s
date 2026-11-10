@@ -37,9 +37,29 @@
         stx DMAADDRBANK+$70
         stz DMALEN+$70  ; 0 length = $10000
 
-        ldx #128      ; channel 0 (1 << n)
+        ldx #%10000000      ; channel 0 (1 << n)
         stx COPYSTART   ; start the transfer
         stx COPYSTART   ; do it again!
+
+        ;seta16
+        stz VMADDL
+        ;setxy8
+        ;ldx #%10000000
+        ;stx VMAIN
+
+        ldx #DMA_01|DMA_CONST
+        stx DMAMODE+$70
+        ldx #.lobyte(VMDATAL)
+        stx DMAPPUREG+$70
+        ;lda #.loword(SE_IDENTITY_TABLE)
+        ;sta DMAADDR+$70
+        ;ldx #^SE_IDENTITY_TABLE
+        ;stx DMAADDRBANK+$70
+        ;lda #$0
+        ;sta DMALEN+$70
+
+        ldx #%10000000
+        stx COPYSTART
 
     ; init everything
         ENGINECALL SE_INIT

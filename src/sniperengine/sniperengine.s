@@ -54,51 +54,52 @@
     se_v_oam1_buffer:       .res 512
     se_v_oam2_buffer:       .res 32
 
-    se_v_ppu_inidisp_var:   .res 1
-    se_v_ppu_objsel_var:    .res 1
+	;; ANY se_ppu_set_register CALLS START HERE
+    se_v_ppu_inidisp_var:   .res 1 ; 0
+    se_v_ppu_objsel_var:    .res 1 ; 1
 	;.res 3 ; oam ports don't need saving
-    se_v_ppu_bgmode_var:    .res 1
-	se_v_ppu_mosaic_var:	.res 1
-    se_v_ppu_bg1sc_var:     .res 1
-    se_v_ppu_bg2sc_var:     .res 1
-    se_v_ppu_bg3sc_var:     .res 1
-    se_v_ppu_bg4sc_var:     .res 1
-    se_v_ppu_bg12nba_var:   .res 1
-    se_v_ppu_bg34nba_var:   .res 1
-	se_v_ppu_bg1hofs_var:	.res 2
-	se_v_ppu_bg1vofs_var:	.res 2
-	se_v_ppu_bg2hofs_var:	.res 2
-	se_v_ppu_bg2vofs_var:	.res 2
-	se_v_ppu_bg3hofs_var:	.res 2
-	se_v_ppu_bg3vofs_var:	.res 2
-	se_v_ppu_bg4hofs_var:	.res 2
-	se_v_ppu_bg4vofs_var:	.res 2
+    se_v_ppu_bgmode_var:    .res 1 ; 2
+	se_v_ppu_mosaic_var:	.res 1 ; 3
+    se_v_ppu_bg1sc_var:     .res 1 ; 4
+    se_v_ppu_bg2sc_var:     .res 1 ; 5
+    se_v_ppu_bg3sc_var:     .res 1 ; 6
+    se_v_ppu_bg4sc_var:     .res 1 ; 7
+    se_v_ppu_bg12nba_var:   .res 1 ; 8
+    se_v_ppu_bg34nba_var:   .res 1 ; 9
+	se_v_ppu_bg1hofs_var:	.res 2 ;10
+	se_v_ppu_bg1vofs_var:	.res 2 ;12
+	se_v_ppu_bg2hofs_var:	.res 2 ;14
+	se_v_ppu_bg2vofs_var:	.res 2 ;16
+	se_v_ppu_bg3hofs_var:	.res 2 ;18
+	se_v_ppu_bg3vofs_var:	.res 2 ;20
+	se_v_ppu_bg4hofs_var:	.res 2 ;22
+	se_v_ppu_bg4vofs_var:	.res 2 ;24
 	;.res 5 ; vram ports don't need saving
-	se_v_ppu_m7sel_var:		.res 1
-	se_v_ppu_m7a_var:		.res 2
-	se_v_ppu_m7b_var:		.res 2
-	se_v_ppu_m7c_var:		.res 2
-	se_v_ppu_m7d_var:		.res 2
-	se_v_ppu_m7x_var:		.res 2
-	se_v_ppu_m7y_var:		.res 2
+	se_v_ppu_m7sel_var:		.res 1 ;26
+	se_v_ppu_m7a_var:		.res 2 ;27
+	se_v_ppu_m7b_var:		.res 2 ;29
+	se_v_ppu_m7c_var:		.res 2 ;31
+	se_v_ppu_m7d_var:		.res 2 ;33
+	se_v_ppu_m7x_var:		.res 2 ;35
+	se_v_ppu_m7y_var:		.res 2 ;37
 	;.res 2 ; cgram ports don't need saving
-	se_v_ppu_w12sel_var:	.res 1
-	se_v_ppu_w34sel_var:	.res 1
-	se_v_ppu_wobjsel_var:	.res 1
-	se_v_ppu_wh0_var:		.res 1
-	se_v_ppu_wh1_var:		.res 1
-	se_v_ppu_wh2_var:		.res 1
-	se_v_ppu_wh3_var:		.res 1
-	se_v_ppu_wbglog_var:	.res 1
-	se_v_ppu_wobjlog_var:	.res 1
-	se_v_ppu_tm_var:		.res 1
-	se_v_ppu_ts_var:		.res 1
-	se_v_ppu_tmw_var:		.res 1
-	se_v_ppu_tsw_var:		.res 1
-	se_v_ppu_cgwsel_var:	.res 1
-	se_v_ppu_cgadsub_var:	.res 1
+	se_v_ppu_w12sel_var:	.res 1 ;39
+	se_v_ppu_w34sel_var:	.res 1 ;40
+	se_v_ppu_wobjsel_var:	.res 1 ;41
+	se_v_ppu_wh0_var:		.res 1 ;42
+	se_v_ppu_wh1_var:		.res 1 ;43
+	se_v_ppu_wh2_var:		.res 1 ;44
+	se_v_ppu_wh3_var:		.res 1 ;45
+	se_v_ppu_wbglog_var:	.res 1 ;46
+	se_v_ppu_wobjlog_var:	.res 1 ;47
+	se_v_ppu_tm_var:		.res 1 ;48
+	se_v_ppu_ts_var:		.res 1 ;49
+	se_v_ppu_tmw_var:		.res 1 ;50
+	se_v_ppu_tsw_var:		.res 1 ;51
+	se_v_ppu_cgwsel_var:	.res 1 ;52
+	se_v_ppu_cgadsub_var:	.res 1 ;53
 	;.res 1 ; why would you save COLDATA
-	se_v_ppu_setini_var:	.res 1
+	se_v_ppu_setini_var:	.res 1 ;54
 
     se_v_cpu_nmitimen_var:  .res 1
 
@@ -159,7 +160,7 @@
 	jmp _UNUSED		;54 28
 	jmp _UNUSED		;57 29
 	jmp _UNUSED		;5a 30
-	jmp _UNUSED		;5d 31
+	jmp se_ppu_set_register		;5d 31
 
 	jmp se_ppu_set_scroll	;60 32
 
@@ -331,7 +332,7 @@
         lda #$0000
         tcd
 
-		ldx #124
+		ldx #128
 		stx se_v_oam_count
 
 
@@ -733,7 +734,18 @@
 		rtl
 	.endproc
 
-
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_ppu_set_register
+	;;	description: set a var in the engine's ppu reg. buffer
+	;;	arguments:	A8/A16 (value)
+	;;				X8 (register)
+	;;	returns: 	none
+	;;	clobbers:	P
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_ppu_set_register
+		sta se_v_ppu_inidisp_var, x
+		rtl
+	.endproc
 
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2441,7 +2453,7 @@ spcProcessStream:
 	rts
 	
 digi_rates:
-	.byte	0, 3, 5, 7, 9, 11, 13
+	.byte	0, 3, 5, 7, 9, 11, 13, 15, 17
 
 ;;----------------------------------------------------------------------
 ;spcProcessDigital:

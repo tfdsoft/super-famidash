@@ -15,6 +15,7 @@
 .segment "BANK_3E" : far
     chr_title_screen:
         .incbin "chr/title_screen.chr"
+        chr_title_screen_end:
     
 
 .segment "BANK_3F" : far
@@ -44,14 +45,14 @@
         .word .loword(sfx_endStart_02_start)
         .byte ^sfx_endStart_02_start
     sfx_playSound_01 = 2
-        .byte 4
+        .byte 6
         .byte 8
         .byte 15
         .word (sfx_playSound_01_end-sfx_playSound_01_start)/9
         .word .loword(sfx_playSound_01_start)
         .byte ^sfx_playSound_01_start
     sfx_quitSound_01 = 3
-        .byte 4
+        .byte 6
         .byte 8
         .byte 15
         .word (sfx_quitSound_01_end-sfx_quitSound_01_start)/9
@@ -61,16 +62,16 @@
 
     sfx_boot_start:
         .incbin "music/sfx/boot.brr"
-    sfx_boot_end:
+        sfx_boot_end:
     sfx_endStart_02_start:
         .incbin "music/sfx/endStart_02.brr"
-    sfx_endStart_02_end:
+        sfx_endStart_02_end:
     sfx_playSound_01_start:
         .incbin "music/sfx/playSound_01.brr"
-    sfx_playSound_01_end:
+        sfx_playSound_01_end:
     sfx_quitSound_01_start:
         .incbin "music/sfx/quitSound_01.brr"
-    sfx_quitSound_01_end:
+        sfx_quitSound_01_end:
 
 
 
@@ -80,6 +81,9 @@
 .segment "BANK_41" : far
     song_menu_theme:
         .incbin "music/exports/test.bank"
+.segment "BANK_42" : far
+    song_stereo_madness:
+        .incbin "music/exports/stereomadness.bank"
     
 
 
@@ -88,11 +92,20 @@
 
 .segment "BANK_C1" : far
     .include "metatiles.s"
-    d_super_cool_palette:
-        .word RGB(31,31,31), RGB(30,30,30), RGB(29,29,29), RGB(28,28,28)
-        .word RGB(27,27,27), RGB(26,26,26), RGB(25,25,25), RGB(24,24,24)
+    pal_super_cool_palette:
+        .word RGB(0,0,31), RGB(0,0,$1f), RGB(0,0,$1a), RGB(0,0,$15)
+        .word RGB(0,0,$10), RGB(0,0,$0b), RGB(0,0,$06), RGB(0,0,0)
+        .word RGB($8,$8,$1f),RGB($10,$10,$1f),RGB($18,$18,$1f),RGB($1f,$1f,$1f)
+        pal_super_cool_palette_end:
 
-
+    pal_title_screen:
+        .byte $B0, $7D, $00, $00, $0D, $10, $D8, $27, $CC, $16, $A7, $09, $EA, $73, $A0, $56
+        .byte $A1, $35, $A0, $03, $E0, $7F, $FF, $7F, $FF, $13, $DF, $02, $1F, $7C, $DF, $7D
+        pal_title_screen_end:
+        
+    map_title_screen:
+        .incbin "tilemaps/titlescreen.map"
+        map_title_screen_end:
 
 
 

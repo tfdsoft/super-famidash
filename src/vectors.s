@@ -14,7 +14,10 @@
 .segment "VECTORS"
 
     ; native mode whatnots
-    .word $0000     ; unused
+    ignore_interrupt:
+    rti             ;
+    .byte $00       ; unused
+
     .word $0000     ; unused
     .addr ignore_interrupt   ; cop instruction
     .addr ignore_interrupt   ; brk instruction

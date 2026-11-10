@@ -40,6 +40,7 @@ SE_VRAM_BUFFER_FLUSH =			19
 SE_VRAM_BUFFER_ADD =			20
 
 
+SE_PPU_SET_REGISTER =			31
 
 SE_PPU_SET_SCROLL =				32
 
@@ -174,6 +175,14 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 		lda arg1
 	.endif
 
+
+	.if n = SE_PPU_SET_REGISTER
+		lda arg2
+		.if .isize = 16
+			setxy8
+		.endif
+		ldx arg1
+	.endif
 
 	.if n = SE_PPU_SET_SCROLL
 		seta16

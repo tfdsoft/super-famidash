@@ -67,7 +67,7 @@
 
         jsl SPC_PROCESS
 
-        lda #1
+        lda #2
         jsl SPC_PLAY_SOUND
 
         ;ENGINECALL SE_PPU_SET_PALETTE_COLOR, pal_super_cool_palette, #0

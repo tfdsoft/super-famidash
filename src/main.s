@@ -15,6 +15,12 @@
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  GAMESTATES GO HERE!!!!
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.include "titlescreen.s"
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .segment "BSS"
     test: .res 1
     funny_scroll_value: .res 2
@@ -27,17 +33,8 @@
 
 .segment "CODE"
     main:
-        DMA_VRAM (chr_title_screen_end-chr_title_screen), chr_title_screen, $1000
-        DMA_VRAM $0800, map_title_screen, $7000
-
         ENGINECALL SE_PPU_CLEAR_PALETTE
         ENGINECALL SE_PPU_SET_SCREEN_BRIGHTNESS, #0
-
-        ENGINECALL SE_PPU_SET_PALETTE_SET, #.loword(pal_super_cool_palette), #^pal_super_cool_palette, #0
-        ENGINECALL SE_PPU_SET_PALETTE_SET, #.loword(pal_title_screen), #^pal_title_screen, #1
-
-        ;ENGINECALL SE_PPU_SET_PALETTE_COLOR, #RGB(31,0,0), #0
-
 
         ; load music lmao
         seta8
@@ -70,26 +67,15 @@
         lda #2
         jsl SPC_PLAY_SOUND
 
-        ;ENGINECALL SE_PPU_SET_PALETTE_COLOR, pal_super_cool_palette, #0
-
 
         ; SET UP MODE 1
-        seta8
+        seta8 ;TODO: replace register numbers with labels
         ENGINECALL SE_PPU_SET_REGISTER, #2, #1 ; mode 1
         ENGINECALL SE_PPU_SET_REGISTER, #4, #$71 ; $7000, 64x32
         ENGINECALL SE_PPU_SET_REGISTER, #5, #$79 ; $7800, 64x32
         ENGINECALL SE_PPU_SET_REGISTER, #6, #$68 ; $6800, 32x32 dual
         seta16
         ENGINECALL SE_PPU_SET_REGISTER, #8, #$0400 ; bg chr: $0000, $0000, $4000, (unused)
-
-
-        
-        ; turn on the screen; all the changes done to vram/cgram
-        ; will be updated in nmi
-        ENGINECALL SE_PPU_ENABLE_LAYER_MAIN, #%00010001
-        ENGINECALL SE_PPU_ENABLE_RENDERING
-
-        ENGINECALL SE_PPU_FADE_SCREEN_BRIGHTNESS, #0, #15
 
 
         ;wdm #0
@@ -108,6 +94,52 @@
             ENGINECALL SE_WAIT_VSYNC
             ENGINECALL SE_OAM_CLEAR
 
+            jsl state_titlescreen
+
+            brl @loop
+            
+
+
+    state_titlescreen:
+        setaxy8 ; set registers to a known size
+
+        wdm #0
+        ENGINECALL SE_PPU_DISABLE_RENDERING
+
+        ;ldx #$80
+        ;stx INIDISP
+
+        seta16
+        lda #$1000
+        sta VMADDL
+        setxy8
+        lda #DMAMODE_PPUDATA
+        sta DMAMODE+$60
+        lda #.loword(chr_title_screen)
+        sta DMAADDR+$60
+        ldx #^chr_title_screen
+        stx DMAADDRBANK+$60
+        lda #$4000
+        sta DMALEN+$60  ; 0 length = $10000
+
+        ldx #%01000000      ; channel 0 (1 << n)
+        stx COPYSTART   ; start the transfer
+
+
+        ENGINECALL SE_PPU_SET_PALETTE_SET, #.loword(pal_super_cool_palette), #^pal_super_cool_palette, #0
+        ENGINECALL SE_PPU_SET_PALETTE_SET, #.loword(pal_title_screen), #^pal_title_screen, #1
+
+        ; turn on the screen; all the changes done to vram/cgram
+        ; will be updated in nmi
+        ENGINECALL SE_PPU_ENABLE_LAYER_MAIN, #%00010001
+        ENGINECALL SE_PPU_ENABLE_RENDERING
+
+        ENGINECALL SE_PPU_FADE_SCREEN_BRIGHTNESS, #0, #15
+
+        @loop:
+            ENGINECALL SE_WAIT_VSYNC
+            
+
             seta8
             setxy16
             jsl SPC_PROCESS
@@ -124,9 +156,11 @@
 
             ENGINECALL SE_GRAY_LINE
 
-            brl @loop
-            
 
+            brl @loop
+        
+        @return:
+        rtl
 
 
 

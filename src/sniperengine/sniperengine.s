@@ -415,9 +415,11 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_disable_rendering
         seta8
-        lda #%10000000
-        trb se_v_ppu_inidisp_var
-        rtl
+		lda se_v_ppu_inidisp_var
+        ora #%10000000
+        sta se_v_ppu_inidisp_var
+		jml se_wait_vsync
+        ;rtl
     .endproc
 
 
@@ -430,9 +432,11 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_enable_rendering
         seta8
-        lda #%01111111
-        tsb se_v_ppu_inidisp_var
-        rtl
+		lda se_v_ppu_inidisp_var
+        and #%01111111
+        sta se_v_ppu_inidisp_var
+		jml se_wait_vsync
+        ;rtl
     .endproc
 
     __se_ppu_inidisp_common:

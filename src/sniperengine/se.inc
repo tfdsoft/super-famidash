@@ -225,10 +225,10 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 ;dst is address in the VRAM
 ;a should be 8 bit, xy should be 16 bit
     .if .asize = 16
-        sep #$20
+        seta8
     .endif
     .if .isize = 8
-        rep #$10
+        setxy16
     .endif
 	ldx #dst_addr
 	stx $2116 ; vram address

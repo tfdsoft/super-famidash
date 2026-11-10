@@ -43,6 +43,8 @@
         jsl SPC_BOOT
         ENGINECALL SE_CPU_ENABLE_NMI
 
+
+        ;; TODO: MAKE SPCCALL MACRO
         lda #^song_menu_theme
         jsl SPC_SET_BANK
 

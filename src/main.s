@@ -72,12 +72,14 @@
 
         ; SET UP MODE 1
         seta8 ;TODO: replace register numbers with labels
-        ENGINECALL SE_PPU_SET_REGISTER, #2, #1 ; mode 1
+        ENGINECALL SE_PPU_SET_REGISTER, #1, #$02
+        ENGINECALL SE_PPU_SET_REGISTER, #2, #$01 ; mode 1
         ENGINECALL SE_PPU_SET_REGISTER, #4, #$71 ; bg1 tilemap: $7000, 64x32
         ENGINECALL SE_PPU_SET_REGISTER, #5, #$79 ; bg2 tilemap: $7800, 64x32
         ENGINECALL SE_PPU_SET_REGISTER, #6, #$68 ; bg3 tilemap: $6800, 32x32 dual
         seta16
         ENGINECALL SE_PPU_SET_REGISTER, #8, #$0400 ; bg chr: $0000, $0000, $4000, (unused)
+
 
 
         ;wdm #0

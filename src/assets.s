@@ -17,17 +17,20 @@
         .incbin "chr/title_screen.chr"
         chr_title_screen_end:
     
-
 .segment "BANK_3F" : far
     chr_level_bg01:
         .incbin "chr/level_bg01_tileset.chr"
 
 
-
-
-
-
 .segment "BANK_40" : far
+    chr_icon00:
+        .incbin "chr/icon00.chr"
+
+
+
+
+
+.segment "BANK_70" : far
     sfx_SoundTable:
 
     sfx_boot = 0
@@ -59,7 +62,6 @@
         .word .loword(sfx_quitSound_01_start)
         .byte ^sfx_quitSound_01_start
 
-
     sfx_boot_start:
         .incbin "music/sfx/boot.brr"
         sfx_boot_end:
@@ -78,10 +80,10 @@
 
 
 
-.segment "BANK_41" : far
+.segment "BANK_71" : far
     song_menu_theme:
         .incbin "music/exports/test.bank"
-.segment "BANK_42" : far
+.segment "BANK_72" : far
     song_stereo_madness:
         .incbin "music/exports/stereomadness.bank"
     
@@ -102,6 +104,11 @@
         .byte $B0, $7D, $00, $00, $0D, $10, $D8, $27, $CC, $16, $A7, $09, $EA, $73, $A0, $56
         .byte $A1, $35, $A0, $03, $E0, $7F, $FF, $7F, $FF, $13, $DF, $02, $1F, $7C, $DF, $7D
         pal_title_screen_end:
+
+    pal_player:
+        .byte $AD, $35, $00, $00, $C0, $00, $80, $01, $60, $02, $20, $03, $E0, $03, $E0, $2F
+        .byte $E0, $4F, $E0, $7F, $20, $67, $60, $4E, $80, $31, $C0, $18, $FF, $7F, $1F, $00
+        pal_player_end:
         
     map_title_screen:
         .incbin "tilemaps/titlescreen.map"

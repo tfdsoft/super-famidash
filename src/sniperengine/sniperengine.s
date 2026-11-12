@@ -1335,7 +1335,7 @@
 		seta8
         lda se_v_ppu_inidisp_var
         sta INIDISP
-		stz OBSEL
+		stz OAMADDL
         
         inc se_v_frame_count
 

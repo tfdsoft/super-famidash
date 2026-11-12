@@ -2,7 +2,7 @@
 
 
 
-.segment "BANK_C1"
+.segment "BANK_C1" : far
 metatiles:
     Metatile("AIR",            TILE($00, 0, 0, 0), TILE($00, 0, 0, 0), TILE($00, 0, 0, 0), TILE($00, 0, 0, 0), COL_NONE)
     Metatile("SPIKE_UP",       TILE($53, 0, 0, 0), TILE($54, 0, 0, 0), TILE($55, 0, 0, 0), TILE($56, 0, 0, 0), COL_SPIKE_TOP)

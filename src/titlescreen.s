@@ -34,7 +34,7 @@
 
             
             inc funny_scroll_value
-            ENGINECALL SE_PPU_SET_SCROLL, #0, funny_scroll_value, #0
+            ENGINECALL SE_PPU_SET_SCROLL, #0, funny_scroll_value, #$e0
 
             ENGINECALL SE_GRAY_LINE
             brl @loop

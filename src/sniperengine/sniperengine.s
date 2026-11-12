@@ -417,8 +417,9 @@
         seta8
 		lda se_v_ppu_inidisp_var
         ora #%10000000
-        sta se_v_ppu_inidisp_var
-		jml se_wait_vsync
+		bra __se_ppu_inidisp_common
+        ;sta se_v_ppu_inidisp_var
+		;jml se_wait_vsync
         ;rtl
     .endproc
 
@@ -434,15 +435,13 @@
         seta8
 		lda se_v_ppu_inidisp_var
         and #%01111111
-        sta se_v_ppu_inidisp_var
-		jml se_wait_vsync
+        ;sta se_v_ppu_inidisp_var
         ;rtl
     .endproc
 
     __se_ppu_inidisp_common:
         sta se_v_ppu_inidisp_var
-
-        rtl
+		jml se_wait_vsync
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

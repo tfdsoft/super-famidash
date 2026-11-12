@@ -87,11 +87,9 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 
 ; this is the shittest macro in the history of history
 .macro ENGINECALL n, arg1, arg2, arg3, arg4, arg5
-
 	;.if n >= 34
 	;	.error "invalid engine call!"
 	;.endif
-
 
 	.if n = SE_PPU_SET_SCREEN_BRIGHTNESS
 		seta8

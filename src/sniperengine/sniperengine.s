@@ -820,50 +820,41 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_oam_draw_sprite
     ;;  description: clear oam lmao
-    ;;  arguments: 	a16 (X position)
-	;;				x8 (Y position)
+    ;;  arguments: 	a16 (Xpos.0-8, Size.9)
+	;;				x8 (Ypos)
 	;;				__rc2 (Tile.0-7)
 	;;				__rc3 (Tile.8 + Attributes)
-	;;				C (Size)
     ;;  returns:    none
-    ;;  clobbers:   Y, P, __rc4
+    ;;  clobbers:   Y, P, __rc4-__rc5
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_oam_draw_sprite
 		.a16
 		.i8
-		; save carry for later
-		php
-
-		; multiply current sprite count by 4
 		pha
+		lda #$0000
 		seta8
+		stx __rc5
 		stz __rc4 ; clear __rc4 for the eventual oam2 write
 		lda se_v_oam_count
+		setaxy16
 		asl
 		asl
 		tay
-		seta16
 		; while A is 16 bit and saved, write attributes
 		lda __rc2 ; and __rc3
 		sta se_v_oam1_buffer+2, y ; Tile + Attributes
 
 		pla ; restore A (Xpos) and write it
-		sta se_v_oam1_buffer+0, y ; X position, low byte
 		seta8
-		txa
+		sta se_v_oam1_buffer+0, y ; X position, low byte
+		lda __rc5
 		sta se_v_oam1_buffer+1, y ; Y position
 
-		plp ; A is now 8 bits wide + carry restored
-		bcc :+ ; if carry set,
-			rol __rc4 ; save carry as sprite size
-			asl __rc4
-		:
 		xba
-		and #%00000001
-		ora __rc4
-		stz __rc4
+		and #%00000011
 
 		; get index again, but divide by 4 this time
+		setxy8
 		tax
 		lda se_v_oam_count
 		lsr
@@ -875,8 +866,8 @@
 
 		; ok now figure out how the hell we're gonna 
 		; add it to the high byte
-		beq @offset_is_zero
 		ldx __rc4
+		beq @offset_is_zero
 		cpx #$40
 		beq @offset_is_one
 		cpx #$80
@@ -896,11 +887,35 @@
 		@offset_is_zero:
 		sta se_v_oam2_buffer, y
 
+
 		inc se_v_oam_count
 		rtl
 	.endproc
 
-	;; TODO: metasprite function
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;	METASPRITE FORMAT
+	;;	--------------------
+	;;	.word (Xpos.0-8, Size.9)
+	;;	.byte (Ypos)
+	;;	.word (Tile Offset + Attributes)
+	;;	--------------------
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;  se_oam_draw_metasprite
+    ;;  description: draw a metasprite to the screen
+    ;;  arguments: 	a16 (Xpos)
+	;;				x8 (Ypos)
+	;;				__rc2(16) (Tile offset + Attributes)
+	;;				__rc4(24) (tile data pointer)
+    ;;  returns:    none
+    ;;  clobbers:   Y, P, __rc4-__rc9
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_oam_draw_metasprite
+		sta __rc8 ; store the x offset here to grab later
+		
+
+		rtl
+	.endproc
+
 
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

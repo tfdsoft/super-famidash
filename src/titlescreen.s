@@ -23,6 +23,7 @@
 
         @loop:
             ENGINECALL SE_WAIT_VSYNC
+            ENGINECALL SE_OAM_CLEAR
 
             seta8
             setxy16
@@ -35,8 +36,23 @@
                 bne @1
 
             
-            ;inc funny_scroll_value
+            inc funny_scroll_value
             ;ENGINECALL SE_PPU_SET_SCROLL, #0, funny_scroll_value, #$e0
+
+            ENGINECALL SE_OAM_DRAW_SPRITE, funny_scroll_value, #$60, #$00, #%00100000, 1
+            ENGINECALL SE_OAM_DRAW_SPRITE, funny_scroll_value, #$70, #$04, #%00100000, 1
+            seta16
+            lda funny_scroll_value
+            clc
+            adc #$10
+            sta funny_scroll_value
+            ENGINECALL SE_OAM_DRAW_SPRITE, funny_scroll_value, #$60, #$02, #%00100000, 1
+            ENGINECALL SE_OAM_DRAW_SPRITE, funny_scroll_value, #$70, #$06, #%00100000, 1
+            seta16
+            lda funny_scroll_value
+            sec
+            sbc #$10
+            sta funny_scroll_value
 
             ENGINECALL SE_GRAY_LINE
             brl @loop

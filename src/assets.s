@@ -30,6 +30,9 @@
 
 
 
+
+
+
 .segment "BANK_70" : far
     sfx_SoundTable:
 
@@ -74,9 +77,6 @@
     sfx_quitSound_01_start:
         .incbin "music/sfx/quitSound_01.brr"
         sfx_quitSound_01_end:
-
-
-
 
 
 

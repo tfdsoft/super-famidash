@@ -447,7 +447,7 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_set_screen_brightness
     ;;  description: set the brightness of the screen.
-    ;;  arguments:  A8 (brightness value, 0-15)
+    ;;  arguments:  a8 (brightness value, 0-15)
     ;;  returns:    none
     ;;  clobbers:   P,__rc2
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -470,7 +470,7 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_fade_screen_brightness
     ;;  description: fade from one brightness level to another
-    ;;  arguments:  A8 (start value), X8 (end value)
+    ;;  arguments:  a8 (start value), x8 (end value)
     ;;  returns:    none
     ;;  clobbers:   Y,P
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -528,8 +528,8 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_set_palette_color
     ;;  description: set one palette index to an rgb color
-    ;;  arguments:  A16 (rgb color)
-    ;;              X8 (palette index)
+    ;;  arguments:  a16 (rgb color)
+    ;;              x8 (palette index)
     ;;  returns:    none
     ;;  clobbers:   X
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -557,7 +557,7 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_set_palette_set
     ;;  description: set a palette set (16 colors)
-    ;;  arguments:  A8 (palette set, 0-15)
+    ;;  arguments:  a8 (palette set, 0-15)
     ;;              __rc2-__rc4 (pointer to data, 24-bit)
     ;;  returns:    none
     ;;  clobbers:   X,Y,P,__rc6-__rc9
@@ -679,7 +679,7 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_enable_layer_main
     ;;  description: enable background layers on main screen
-    ;;  arguments:  A8 (layers to enable)
+    ;;  arguments:  a8 (layers to enable)
     ;;  returns:    none
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -694,7 +694,7 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_enable_layer_sub
     ;;  description: enable background layers on sub screen
-    ;;  arguments:  A8 (layers to enable)
+    ;;  arguments:  a8 (layers to enable)
     ;;  returns:    none
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -709,7 +709,7 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_disable_layer_main
     ;;  description: disable background layers on main screen
-    ;;  arguments:  A8 (layers to disable)
+    ;;  arguments:  a8 (layers to disable)
     ;;  returns:    none
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -725,7 +725,7 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_disable_layer_sub
     ;;  description: disable background layers on sub screen
-    ;;  arguments:  A8 (layers to disable)
+    ;;  arguments:  a8 (layers to disable)
     ;;  returns:    none
     ;;  clobbers:   none
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -740,8 +740,8 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_ppu_set_register
 	;;	description: set a var in the engine's ppu reg. buffer
-	;;	arguments:	A8/A16 (value)
-	;;				X8 (register)
+	;;	arguments:	a8/a16 (value)
+	;;				x8 (register)
 	;;	returns: 	none
 	;;	clobbers:	P
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -895,24 +895,96 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;	METASPRITE FORMAT
 	;;	--------------------
-	;;	.word (Xpos.0-8, Size.9)
-	;;	.byte (Ypos)
-	;;	.word (Tile Offset + Attributes)
+	;;	.byte (Flip X offset), (Flip Y offset)
+	;;  
+	;;	.byte (Xpos), (Ypos), (Tile), (Attributes), (Size (0 or 2))
+	;;	...
+	;;
+	;;	.byte $80 (end of list)
 	;;	--------------------
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_oam_draw_metasprite
     ;;  description: draw a metasprite to the screen
-    ;;  arguments: 	a16 (Xpos)
-	;;				x8 (Ypos)
-	;;				__rc2(16) (Tile offset + Attributes)
-	;;				__rc4(24) (tile data pointer)
+    ;;  arguments: 	a16 (Metasprite address)
+	;;				x8 (Metasprite bank)
+	;;				__rc2(16) (Xpos)
+	;;				__rc4(8) (Ypos)
     ;;  returns:    none
-    ;;  clobbers:   Y, P, __rc4-__rc9
+    ;;  clobbers:   Y, P, __rc6-__rc9
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_oam_draw_metasprite
-		sta __rc8 ; store the x offset here to grab later
+		; THIS CODE IS FROM NESDOUG'S SPEZ (SPRITE EDITOR)
+		.a16
+		.i8
+		; __rc2 - x 9 bit
+		; __rc4 - y
+		; A16 = metasprite data address
+		; X = bank of metasprite data    
 		
+			php 
+			setaxy16
+			sta rc6 ;address of metasprite
+			stx rc8
+			
+			lda se_v_oam_count
+			asl a
+			asl a ;x4
+			tax
+			
+			ldy #2 ;0
+		@loop:
+			seta8
+			lda [rc6], y
+			cmp #128 ; end of data
+			beq @done
+		;first byte is rel x (signed)	
+			seta16
+			and #$00ff
+			cmp #$0080 ;is negative?
+			bcc @pos_x
+		@neg_x:
+			ora #$ff00 ; extend the sign
+		@pos_x:
+			clc
+			adc __rc2
+			seta8
+			sta a:se_v_oam1_buffer, x
+		;high byte still has 9th bit    
+			iny
+			lda [rc6], y ;y byte
+			clc
+			adc __rc4	
+			sta a:se_v_oam1_buffer+1, x
+			iny
+			lda [rc6], y ;tile
+			sta a:se_v_oam1_buffer+2, x
+			iny
+			lda [rc6], y ;attributes
+			sta a:se_v_oam1_buffer+3, x
+			iny
+			lda [rc6], y ;size, 0 or 2
+			iny
+			sta __rc9
+			xba
+			and #1
+			ora __rc9
 
+			; TODO: REPLACE WITH PROPER OAM2 BIT SHIFTING
+			ldx se_v_oam_count
+			;sta a:se_v_oam2_buffer, x ;high table
+
+			txa
+			inc 
+			seta16
+			and #$007f
+			sta se_v_oam_count
+			asl a
+			asl a ;x4
+			tax
+			bra @loop
+
+		@done:
+			plp
 		rtl
 	.endproc
 

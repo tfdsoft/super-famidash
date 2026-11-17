@@ -923,8 +923,8 @@
 		
 			php 
 			setaxy16
-			sta rc6 ;address of metasprite
-			stx rc8
+			sta __rc6 ;address of metasprite
+			stx __rc8
 			
 			lda se_v_oam_count
 			asl a
@@ -934,7 +934,7 @@
 			ldy #2 ;0
 		@loop:
 			seta8
-			lda [rc6], y
+			lda [__rc6], y
 			cmp #128 ; end of data
 			beq @done
 		;first byte is rel x (signed)	
@@ -951,18 +951,18 @@
 			sta a:se_v_oam1_buffer, x
 		;high byte still has 9th bit    
 			iny
-			lda [rc6], y ;y byte
+			lda [__rc6], y ;y byte
 			clc
 			adc __rc4	
 			sta a:se_v_oam1_buffer+1, x
 			iny
-			lda [rc6], y ;tile
+			lda [__rc6], y ;tile
 			sta a:se_v_oam1_buffer+2, x
 			iny
-			lda [rc6], y ;attributes
+			lda [__rc6], y ;attributes
 			sta a:se_v_oam1_buffer+3, x
 			iny
-			lda [rc6], y ;size, 0 or 2
+			lda [__rc6], y ;size, 0 or 2
 			iny
 			sta __rc9
 			xba

@@ -140,10 +140,9 @@ SE_TEST_2 =				SE_BASE_ADDRESS + $303
 		stx __rc3
 		ldx arg2
 		lda arg1
-		.if arg5 == 0
-			clc
-		.else
-			sec
+		and #$1ff
+		.if arg5 > 0
+			ora #$200
 		.endif
 	.endif
 

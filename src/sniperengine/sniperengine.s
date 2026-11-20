@@ -905,87 +905,190 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;  se_oam_draw_metasprite
     ;;  description: draw a metasprite to the screen
-    ;;  arguments: 	a16 (Metasprite address)
-	;;				x8 (Metasprite bank)
-	;;				__rc2(16) (Xpos)
-	;;				__rc4(8) (Ypos)
+    ;;  arguments: 	a8/x8 (Xpos)
+	;;				__rc2(24) (Metatile data)
+	;;				__rc5(8) (Ypos)
     ;;  returns:    none
     ;;  clobbers:   Y, P, __rc6-__rc9
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;	NOTE: THIS CODE WAS GENERATED WITH THE LLVM-MOS
+	;;	COMPILER. IT IS NOT FULLY-OPTIMIZED AND *WILL* BE
+	;;	REWRITTEN LATER ON.
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	.proc se_oam_draw_metasprite
-		; THIS CODE IS FROM NESDOUG'S SPEZ (SPRITE EDITOR)
-		.a16
+		.a8
 		.i8
-		; __rc2 - x 9 bit
-		; __rc4 - y
-		; A16 = metasprite data address
-		; X = bank of metasprite data    
-		
-			php 
-			setaxy16
-			sta __rc6 ;address of metasprite
-			stx __rc8
-			
-			lda se_v_oam_count
-			asl a
-			asl a ;x4
-			tax
-			
-			ldy #2 ;0
-		@loop:
-			seta8
-			lda [__rc6], y
-			cmp #128 ; end of data
-			beq @done
-		;first byte is rel x (signed)	
-			seta16
-			and #$00ff
-			cmp #$0080 ;is negative?
-			bcc @pos_x
-		@neg_x:
-			ora #$ff00 ; extend the sign
-		@pos_x:
+			sta     __rc9
+			stx     __rc13
+			ldx     __rc5
+			stx     __rc10
+			lda     se_v_oam_count
+			asl
+			stz     __rc5
+			rol     __rc5
+			asl
+			sta     __rc6
+			rol     __rc5
+			lda     #<se_v_oam1_buffer
 			clc
-			adc __rc2
-			seta8
-			sta a:se_v_oam1_buffer, x
-		;high byte still has 9th bit    
-			iny
-			lda [__rc6], y ;y byte
+			adc     __rc6
+			sta     __rc6
+			lda     #>se_v_oam1_buffer
+			adc     __rc5
+			ldy     se_v_oam2_buffer
+			sty     __rc12
+			sta     __rc7
+			lda     #3
+			and     se_v_oam_count
+			sta     __rc11
+			jmp     @BB0_7
+		@BB0_1:
+			tya
+			and     #1
+			sta     __rc5
+			lda     __rc12
+			and     #254
+			ora     __rc5
+			sta     se_v_oam2_buffer
+			sta     __rc8
+			lda     #2
+			ldy     #6
+			and     [__rc2],y
+			sta     __rc5
+			lda     __rc8
+			and     #253
+			jmp     @BB0_6
+		@BB0_2:
+			and     #16
+			sta     __rc5
+			lda     __rc12
+			and     #239
+			ora     __rc5
+			sta     se_v_oam2_buffer
+			sta     __rc5
+			ldy     #6
+			lda     [__rc2],y
+			asl
+			asl
+			asl
+			asl
+			and     #32
+			tay
+			lda     __rc5
+			and     #223
+			jmp     @BB0_5
+		@BB0_3:
+			asl
+			asl
+			and     #64
+			sta     __rc5
+			lda     __rc12
+			and     #191
+			ora     __rc5
+			sta     se_v_oam2_buffer
+			sta     __rc5
+			ldy     #6
+			lda     [__rc2],y
+			lsr
+			lsr
+			lda     #0
+			ror
+			and     #128
+			tay
+			lda     __rc5
+			and     #127
+			bra     @BB0_5
+		@BB0_4:
+			lda     __rc8
+			and     #4
+			sta     __rc5
+			lda     __rc12
+			and     #251
+			ora     __rc5
+			sta     se_v_oam2_buffer
+			sta     __rc5
+			ldy     #6
+			lda     [__rc2],y
+			asl
+			asl
+			and     #8
+			tay
+			lda     __rc5
+			and     #247
+		@BB0_5:
+			sta     __rc5
+			tya
+		@BB0_6:
+			ora     __rc5
+			sta     __rc12
+			sta     se_v_oam2_buffer
+			lda     __rc2
 			clc
-			adc __rc4	
-			sta a:se_v_oam1_buffer+1, x
-			iny
-			lda [__rc6], y ;tile
-			sta a:se_v_oam1_buffer+2, x
-			iny
-			lda [__rc6], y ;attributes
-			sta a:se_v_oam1_buffer+3, x
-			iny
-			lda [__rc6], y ;size, 0 or 2
-			iny
-			sta __rc9
-			xba
-			and #1
-			ora __rc9
-
-			; TODO: REPLACE WITH PROPER OAM2 BIT SHIFTING
-			ldx se_v_oam_count
-			;sta a:se_v_oam2_buffer, x ;high table
-
-			txa
-			inc 
-			seta16
-			and #$007f
-			sta se_v_oam_count
-			asl a
-			asl a ;x4
+			adc     #5
+			sta     __rc2
+			lda     __rc3
+			adc     #0
+			sta     __rc3
+		@BB0_7:
+			ldy     #2
+			lda     [__rc2],y
+			cmp     #128
+			bne     @BB0_8
+			jmp     @BB0_11
+		@BB0_8:
+			sta     __rc5
+			stz     __rc8
 			tax
-			bra @loop
-
-		@done:
-			plp
-		rtl
+			bpl     @BB0_10
+			lda     #255
+			sta     __rc8
+		@BB0_10:
+			lda     __rc9
+			clc
+			adc     __rc5
+			tay
+			lda     __rc13
+			adc     #0
+			clc
+			adc     __rc8
+			sta     __rc5
+			tya
+			sta     (__rc6)
+			clc
+			lda     __rc10
+			ldy     #3
+			adc     [__rc2],y
+			sty     __rc8
+			ldy     #1
+			sta     (__rc6),y
+			ldy     #4
+			lda     [__rc2],y
+			ldy     #2
+			sta     (__rc6),y
+			ldy     #5
+			lda     [__rc2],y
+			ldy     __rc8
+			sta     (__rc6),y
+			lda     __rc5
+			ldy     __rc5
+			asl
+			asl
+			sta     __rc8
+			asl
+			asl
+			ldx     __rc11
+			stx     __rc5
+			asl     __rc5
+			ldx     __rc5
+			jmp     (@JTI0_0,x)
+		@BB0_11:
+			lda     __rc4
+			rtl
+		@JTI0_0:
+			.word  .loword(@BB0_1)
+			.word  .loword(@BB0_4)
+			.word  .loword(@BB0_2)
+			.word  .loword(@BB0_3)
 	.endproc
 
 

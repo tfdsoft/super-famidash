@@ -1161,7 +1161,7 @@
 		lda se_v_ppu_inidisp_var
 		and #$80
 		ora #$05
-		sta $842100 ; INIDISP via bank $84
+		sta $852100 ; INIDISP via bank $85
 
 		lda #39
 		@1:
@@ -1176,7 +1176,7 @@
 		lda se_v_ppu_inidisp_var
 		and #$80
 		ora #$0a
-		sta $8c2100 ; INIDISP via bank $8c
+		sta $8a2100 ; INIDISP via bank $8a
 
 		lda #40
 		@2:

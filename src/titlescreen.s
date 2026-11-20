@@ -36,25 +36,47 @@
                 bne @1
 
             
-            inc funny_scroll_value
-            ;ENGINECALL SE_PPU_SET_SCROLL, #0, funny_scroll_value, #$e0
-
-            ;ENGINECALL SE_OAM_DRAW_SPRITE, funny_scroll_value, #$60, #$00, #%00100000, 1
+            ;inc funny_scroll_value
             
+            ENGINECALL SE_GRAY_LINE
 
-            seta16
             setxy8
-            lda #.loword(funny_metatile_test)
-            sta __rc2
-            ldx #^funny_metatile_test
-            stx __rc4
-            seta8
-            lda #$40
-            sta __rc5
-            lda funny_scroll_value+0
-            ldx funny_scroll_value+1
-            ENGINECALL SE_OAM_DRAW_METASPRITE
-            
+
+            ldx #0
+            @metasprite_loop:
+                phx
+
+                seta16
+                lda #.loword(funny_metatile_test)
+                sta __rc2
+                seta8
+                lda #^funny_metatile_test
+                sta __rc4
+
+                lda #$00
+                clc
+                adc SE_IDENTITY_TABLE, x
+                asl
+                asl
+                sta __rc5
+
+                lda funny_scroll_value+0
+                clc
+                adc SE_IDENTITY_TABLE, x
+                ldx funny_scroll_value+1
+                bcc :+
+                    inx
+                :
+                ENGINECALL SE_OAM_DRAW_METASPRITE
+
+                plx
+                inx
+                cpx #16
+                bne @metasprite_loop
+
+
+
+
 
             ENGINECALL SE_GRAY_LINE
             brl @loop

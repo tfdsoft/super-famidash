@@ -908,8 +908,8 @@
     ;;  arguments: 	a8/x8 (Xpos)
 	;;				__rc2(24) (Metatile data)
 	;;				__rc5(8) (Ypos)
-    ;;  returns:    none
-    ;;  clobbers:   Y, P, __rc6-__rc9
+    ;;  returns:    a8 (bank byte of metatile data)
+    ;;  clobbers:   Y, P, __rc6-__rc13
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;;	NOTE: THIS CODE WAS GENERATED WITH THE LLVM-MOS
 	;;	COMPILER. IT IS NOT FULLY-OPTIMIZED AND *WILL* BE

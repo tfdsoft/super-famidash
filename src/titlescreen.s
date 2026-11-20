@@ -39,7 +39,22 @@
             inc funny_scroll_value
             ;ENGINECALL SE_PPU_SET_SCROLL, #0, funny_scroll_value, #$e0
 
-            ENGINECALL SE_OAM_DRAW_SPRITE, funny_scroll_value, #$60, #$00, #%00100000, 1
+            ;ENGINECALL SE_OAM_DRAW_SPRITE, funny_scroll_value, #$60, #$00, #%00100000, 1
+            
+
+            seta16
+            setxy8
+            lda #.loword(funny_metatile_test)
+            sta __rc2
+            ldx #^funny_metatile_test
+            stx __rc4
+            seta8
+            lda #$40
+            sta __rc5
+            lda funny_scroll_value+0
+            ldx funny_scroll_value+1
+            ENGINECALL SE_OAM_DRAW_METASPRITE
+            
 
             ENGINECALL SE_GRAY_LINE
             brl @loop

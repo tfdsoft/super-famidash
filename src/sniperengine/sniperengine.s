@@ -137,7 +137,7 @@
 	;; oam stuff
 	jmp se_oam_clear					;30	16
 	jmp se_oam_draw_sprite				;33	17
-	jmp _UNUSED ; TO BE OAM_DRAW_METASPRITE	;36 18
+	jmp se_oam_draw_metasprite 			;36 18
 
 
 	;; vram buffer stuff
@@ -906,7 +906,7 @@
     ;;  se_oam_draw_metasprite
     ;;  description: draw a metasprite to the screen
     ;;  arguments: 	a8/x8 (Xpos)
-	;;				__rc2(24) (Metatile data)
+	;;				__rc2(24) (Metatile data address)
 	;;				__rc5(8) (Ypos)
     ;;  returns:    a8 (bank byte of metatile data)
     ;;  clobbers:   Y, P, __rc6-__rc13
@@ -918,177 +918,190 @@
 	.proc se_oam_draw_metasprite
 		.a8
 		.i8
-			sta     __rc9
-			stx     __rc13
-			ldx     __rc5
-			stx     __rc10
-			lda     se_v_oam_count
-			asl
-			stz     __rc5
-			rol     __rc5
-			asl
-			sta     __rc6
-			rol     __rc5
-			lda     #<se_v_oam1_buffer
-			clc
-			adc     __rc6
-			sta     __rc6
-			lda     #>se_v_oam1_buffer
-			adc     __rc5
-			ldy     se_v_oam2_buffer
-			sty     __rc12
-			sta     __rc7
-			lda     #3
-			and     se_v_oam_count
-			sta     __rc11
-			jmp     @BB0_7
+		sta     __rc9
+        stx     __rc11
+        ldx     __rc5
+        stx     __rc10
+        ldx     se_v_oam_count
+        txa
+        asl
+        stz     __rc5
+        rol     __rc5
+        asl
+        sta     __rc6
+        rol     __rc5
+        lda     #<se_v_oam1_buffer
+        clc
+        adc     __rc6
+        sta     __rc6
+        lda     #>se_v_oam1_buffer
+        adc     __rc5
+        sta     __rc7
+        ldy     se_v_oam2_buffer
+        sty     __rc12
+        jmp     @BB0_7
 		@BB0_1:
-			tya
-			and     #1
-			sta     __rc5
-			lda     __rc12
-			and     #254
-			ora     __rc5
-			sta     se_v_oam2_buffer
-			sta     __rc8
-			lda     #2
-			ldy     #6
-			and     [__rc2],y
-			sta     __rc5
-			lda     __rc8
-			and     #253
-			jmp     @BB0_6
+        tya
+        and     #1
+        sta     __rc5
+        lda     __rc12
+        and     #254
+        ora     __rc5
+        sta     se_v_oam2_buffer
+        sta     __rc8
+        lda     #2
+        ldy     #6
+        and     [__rc2],y
+        sta     __rc5
+        lda     __rc8
+        and     #253
+        jmp     @BB0_6
 		@BB0_2:
-			and     #16
-			sta     __rc5
-			lda     __rc12
-			and     #239
-			ora     __rc5
-			sta     se_v_oam2_buffer
-			sta     __rc5
-			ldy     #6
-			lda     [__rc2],y
-			asl
-			asl
-			asl
-			asl
-			and     #32
-			tay
-			lda     __rc5
-			and     #223
-			jmp     @BB0_5
+        and     #16
+        sta     __rc5
+        lda     __rc12
+        and     #239
+        ora     __rc5
+        sta     se_v_oam2_buffer
+        sta     __rc5
+        ldy     #6
+        lda     [__rc2],y
+        asl
+        asl
+        asl
+        asl
+        and     #32
+        tay
+        lda     __rc5
+        and     #223
+        jmp     @BB0_5
 		@BB0_3:
-			asl
-			asl
-			and     #64
-			sta     __rc5
-			lda     __rc12
-			and     #191
-			ora     __rc5
-			sta     se_v_oam2_buffer
-			sta     __rc5
-			ldy     #6
-			lda     [__rc2],y
-			lsr
-			lsr
-			lda     #0
-			ror
-			and     #128
-			tay
-			lda     __rc5
-			and     #127
-			bra     @BB0_5
+        asl
+        asl
+        and     #64
+        sta     __rc5
+        lda     __rc12
+        and     #191
+        ora     __rc5
+        sta     se_v_oam2_buffer
+        sta     __rc5
+        ldy     #6
+        lda     [__rc2],y
+        lsr
+        lsr
+        lda     #0
+        ror
+        and     #128
+        tay
+        lda     __rc5
+        and     #127
+        bra     @BB0_5
 		@BB0_4:
-			lda     __rc8
-			and     #4
-			sta     __rc5
-			lda     __rc12
-			and     #251
-			ora     __rc5
-			sta     se_v_oam2_buffer
-			sta     __rc5
-			ldy     #6
-			lda     [__rc2],y
-			asl
-			asl
-			and     #8
-			tay
-			lda     __rc5
-			and     #247
+        lda     __rc5
+        and     #4
+        sta     __rc5
+        lda     __rc12
+        and     #251
+        ora     __rc5
+        sta     se_v_oam2_buffer
+        sta     __rc5
+        ldy     #6
+        lda     [__rc2],y
+        asl
+        asl
+        and     #8
+        tay
+        lda     __rc5
+        and     #247
 		@BB0_5:
-			sta     __rc5
-			tya
+        sta     __rc5
+        tya
 		@BB0_6:
-			ora     __rc5
-			sta     __rc12
-			sta     se_v_oam2_buffer
-			lda     __rc2
-			clc
-			adc     #5
-			sta     __rc2
-			lda     __rc3
-			adc     #0
-			sta     __rc3
+        ora     __rc5
+        sta     __rc12
+        sta     se_v_oam2_buffer
+        ldx     __rc13
+        stx     __rc5
+        inc     __rc5
+        inx
+        stx     se_v_oam_count
+        lda     __rc2
+        clc
+        adc     #5
+        sta     __rc2
+        lda     __rc3
+        adc     #0
+        sta     __rc3
+        lda     __rc6
+        clc
+        adc     #4
+        sta     __rc6
+        lda     __rc7
+        adc     #0
+        sta     __rc7
+        ldx     __rc5
 		@BB0_7:
-			ldy     #2
-			lda     [__rc2],y
-			cmp     #128
-			bne     @BB0_8
-			jmp     @BB0_11
+        ldy     #2
+        lda     [__rc2],y
+        cmp     #128
+        bne     @BB0_8
+        jmp     @BB0_11
 		@BB0_8:
-			sta     __rc5
-			stz     __rc8
-			tax
-			bpl     @BB0_10
-			lda     #255
-			sta     __rc8
+        sta     __rc5
+        stz     __rc8
+        tay
+        bpl     @BB0_10
+        lda     #255
+        sta     __rc8
 		@BB0_10:
-			lda     __rc9
-			clc
-			adc     __rc5
-			tay
-			lda     __rc13
-			adc     #0
-			clc
-			adc     __rc8
-			sta     __rc5
-			tya
-			sta     (__rc6)
-			clc
-			lda     __rc10
-			ldy     #3
-			adc     [__rc2],y
-			sty     __rc8
-			ldy     #1
-			sta     (__rc6),y
-			ldy     #4
-			lda     [__rc2],y
-			ldy     #2
-			sta     (__rc6),y
-			ldy     #5
-			lda     [__rc2],y
-			ldy     __rc8
-			sta     (__rc6),y
-			lda     __rc5
-			ldy     __rc5
-			asl
-			asl
-			sta     __rc8
-			asl
-			asl
-			ldx     __rc11
-			stx     __rc5
-			asl     __rc5
-			ldx     __rc5
-			jmp     (@JTI0_0,x)
+        lda     __rc9
+        clc
+        adc     __rc5
+        tay
+        lda     __rc11
+        adc     #0
+        clc
+        adc     __rc8
+        sta     __rc5
+        tya
+        sta     [__rc6]
+        clc
+        lda     __rc10
+        ldy     #3
+        adc     [__rc2],y
+        sty     __rc8
+        ldy     #1
+        sta     (__rc6),y
+        ldy     #4
+        lda     [__rc2],y
+        ldy     #2
+        sta     (__rc6),y
+        ldy     #5
+        lda     [__rc2],y
+        ldy     __rc8
+        sta     (__rc6),y
+        stx     __rc13
+        txa
+        and     #3
+        sta     __rc8
+        lda     __rc5
+        ldy     __rc5
+        asl
+        asl
+        sta     __rc5
+        asl
+        asl
+        asl     __rc8
+        ldx     __rc8
+        jmp     (@JTI0_0,x)
 		@BB0_11:
-			lda     __rc4
-			rtl
+        lda     __rc4
+        rtl
 		@JTI0_0:
-			.word  .loword(@BB0_1)
-			.word  .loword(@BB0_4)
-			.word  .loword(@BB0_2)
-			.word  .loword(@BB0_3)
+        .word  .loword(@BB0_1)
+        .word  .loword(@BB0_4)
+        .word  .loword(@BB0_2)
+        .word  .loword(@BB0_3)
 	.endproc
 
 

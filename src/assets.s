@@ -82,7 +82,7 @@
 
 .segment "BANK_71" : far
     song_menu_theme:
-        .incbin "music/exports/test.bank"
+        .incbin "music/exports/gdmenutheme.bank"
 .segment "BANK_72" : far
     song_stereo_madness:
         .incbin "music/exports/stereomadness.bank"
@@ -114,6 +114,14 @@
         .incbin "tilemaps/titlescreen.map"
         map_title_screen_end:
 
+
+    funny_metatile_test:
+        .byte $00, $00
+        .byte $00, $00, $00, $00, $02
+        .byte $10, $00, $02, $00, $02
+        .byte $00, $10, $04, $00, $02
+        .byte $10, $10, $06, $00, $02
+        .byte $80
 
 
 

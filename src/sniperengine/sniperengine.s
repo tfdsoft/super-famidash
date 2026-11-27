@@ -472,54 +472,45 @@
     ;;  description: fade from one brightness level to another
     ;;  arguments:  a8 (start value), x8 (end value)
     ;;  returns:    none
-    ;;  clobbers:   Y,P
+    ;;  clobbers:   Y,P,__rc3,__rc4
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     .proc se_ppu_fade_screen_brightness
         .a8
         .i8
-        phy
-        ldy __rc20
-        phy
-        ldy __rc21
-        phy 
-        stx __rc20 ;to
-        sta __rc21 ;from
+        stx __rc4 ;to
+        sta __rc3 ;from
+		pha
         jsl se_ppu_set_screen_brightness
+		pla
 
         bra @check_equal
 
         @fade_loop:
             jsl se_wait_vsync
 
-            lda __rc21
-            cmp __rc20
+            lda __rc3
+            cmp __rc4
             bcs @more
 
         @less:
             clc
             adc #1
-            sta __rc21
+            sta __rc3
             jsl se_ppu_set_screen_brightness
             bra @check_equal
 
         @more:
             sec
             sbc #1
-            sta __rc21
+            sta __rc3
             jsl se_ppu_set_screen_brightness
 
         @check_equal:
-            lda __rc21
-            cmp __rc20
+            lda __rc3
+            cmp __rc4
             bne @fade_loop
 
         @done:
-
-        ply
-        sty __rc21
-        ply
-        sty __rc20
-        ply
 
         rtl
     .endproc

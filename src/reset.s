@@ -44,8 +44,8 @@
         ;seta16
         stz VMADDL
         ;setxy8
-        ;ldx #%10000000
-        ;stx VMAIN
+        ldx #%10000000
+        stx VMAIN
 
         ldx #DMA_01|DMA_CONST
         stx DMAMODE+$70

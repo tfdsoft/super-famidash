@@ -163,6 +163,7 @@
 	jmp se_ppu_set_register		;5d 31
 
 	jmp se_ppu_set_scroll	;60 32
+	jmp se_joypad_return_status	;63 33
 
 
 
@@ -1362,6 +1363,27 @@
         rtl
 	.endproc
 	
+
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;	se_joypad_return_status
+	;;	description: get joypad status
+	;;	arguments:	a8 (joypad index)
+	;;	returns:	a16 (buttons pressed)
+	;;	clobbers:	X, P
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	.proc se_joypad_return_status
+		.a8
+		asl
+		tax
+		
+		seta16
+		lda se_v_controller_1, x
+
+		rtl
+	.endproc
+
 
 
 
